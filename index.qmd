@@ -1,5 +1,5 @@
 ---
-title: "Mi sitio"
+title: "Mi sitio de Tubidez"
 format: 
   html:
     number-sections: true
@@ -11,15 +11,15 @@ format:
     csl: bibliografia/ieee.csl
 date: last-modified
 author:
-  - name: Víctor Gauto
+  - name: Víctor Gustavo Gómez
     orcid: 0000-0001-9960-8558
     corresponding: true
-    email: victor.gauto@ca.frre.utn.edu.ar
+    email: gomezvictoriq@ca.frre.utn.edu.ar
     affiliations:
       - name: GISTAQ (UTN-FRRe)
         url: https://www.instagram.com/gistaq.utn/
 abstract: |
-  Este sitio web contiene cuestiones etc
+  Este sitio web contiene cuestiones sobre el parámetro Turbidez, indicadore de la calidad del agua para el río Paraná
 keywords:
   - GISTAQ
   - UTN
