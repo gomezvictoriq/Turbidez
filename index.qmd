@@ -18,13 +18,15 @@ author:
       - name: GISTAQ (UTN-FRRe)
         url: https://www.instagram.com/gistaq.utn/
 abstract: |
-  Este sitio web contiene información sobre la estimación de la turbidez por teledetección en la cuenca media del Río Paraná. Se utilizarán imágenes del satélite Sentinel-2 con correccíon automática, de las cuales se obtiene la reflectancia de la superfie del agua. Se buscará la relación entre la reflectancia y la turbidez por métodos de regresion tradionales y machine learning.
-  La turbidez es uno parámetros de interés dentro proyecto "Estimar indicadores de la calidad del agua en la cuenca media del río Paraná" que se desarolla en el GISTAQ, UTN- FRRe.
+  Este sitio web contiene información sobre la estimación de la turbidez por teledetección en la cuenca media del Río Paraná. 
+  La turbidez es uno parámetros de interés dentro proyecto Estimar indicadores de calidad de agua en la cuenca media del río Paraná para el desarrollo de un algoritmo mediante técnicas de teledetección satelital (MSECRE0008604), desarrollado por el Grupo de Investigación Sobre Temas Ambientales y Químicos (GISTAQ) de la Universidad Tecnológica Nacional Facultad Regional Resistencia (UTN-FRRe).
+
+  Se utilizarán imágenes del satélite Sentinel-2 con correccíon automática, de las cuales se obtiene la reflectancia de superfie del agua. Se buscará la relación entre la reflectancia y la turbidez por métodos de regresión tradionales y machine learning. Una vez obtenido el algoritmo que relacione ambas propiedades, se desarrollaran mapas de distribución espacial.
+  
 keywords:
   - GISTAQ
   - UTN
   - FRRe
-  - Quarto
   - Algoritmo
   - Turbidez
   - Machine learning
