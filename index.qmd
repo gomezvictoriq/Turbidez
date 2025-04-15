@@ -18,7 +18,8 @@ author:
       - name: GISTAQ (UTN-FRRe)
         url: https://www.instagram.com/gistaq.utn/
 abstract: |
-  Este sitio web contiene cuestiones sobre el parámetro Turbidez, indicador de la calidad del agua para el río Paraná.
+  Este sitio web contiene información sobre la estimación de la turbidez por teledetección en la cuenca media del Río Paraná. Se utilizarán imágenes del satélite Sentinel-2 con correccíon automática, de las cuales se obtiene la reflectancia de la superfie del agua. Se buscará la relación entre la reflectancia y la turbidez por métodos de regresion tradionales y machine learning.
+  La turbidez es uno parámetros de interés dentro proyecto "Estimar indicadores de la calidad del agua en la cuenca media del río Paraná" que se desarolla en el GISTAQ, UTN- FRRe.
 keywords:
   - GISTAQ
   - UTN
@@ -31,7 +32,7 @@ keywords:
 ---
 
 
-## Turbidez
+# Turbidez
 
 La turbidez se refiere a la opacidad o falta de claridad en un líquido provocada por la presencia de partículas suspendidas. Este fenómeno es un indicador clave en el monitoreo de la calidad del agua y su influencia en diferentes ecosistemas es significativa.
 
@@ -45,7 +46,7 @@ Existe una fuerte correlación entre turbidez y sólidos suspendidos totales, po
 
 Existe una relación inversa entre la Turbidez y la profundidad del disco de Secchi (a valores bajos de secchi mayor turbidez), por lo que también se puede estimar turbidez a partir de mediciones de disco de secchi.
 
-### Métodos tradicionales
+## Métodos tradicionales
 
 :::: {.content-visible when-format="html"}
 
@@ -65,31 +66,12 @@ Existe una relación inversa entre la Turbidez y la profundidad del disco de Sec
 
 ::::
 
-:::: {.content-visible when-format="typst"}
-
-| Ecuación | Referencia |
-|:--|:-:|
-| $1.559e^{35.533 \cdot B03}$, $1.879e^{37.745(B03 \cdot B5)/(B04+B12)}$ | [@Ma2021] |
-| $2677.2 \cdot B04^{1.856}$ | [@Hossain2021] |
-| $969-1.5468 \cdot R_{1200nm}+2.07 \frac{B8A}{B02}$ | [@Najafzadeh2023] |
-| $y=-1.1+5.8 \frac{B02}{B04}$, $y=3.896-4.186 \frac{B02}{B03}$ | [@Allam2020] |
-| $y=37661 \cdot B8A^{2}+1845 \cdot B8A$, $y=531.5- \frac{B04}{0.88}$ | [@Luo2020] |
-
-: Características principales de algoritmos tradicionales para la estimación de turbidez. {#tbl-turb-trad .striped .hover tbl-colwidths="[80,20]"}
-
-::: {.block stroke='rgb("#B86092")' inset="8pt" radius="4pt"}
-
-[Ver tabla completa en la versión online &#x2197;](https://vhgauto.quarto.pub/gistaq-parana/#tbl-turb-trad)
-
-:::
-
-::::
 
 Múltiples modelos (lineal, logaritmos, inversa, cuadrática, exponencial, potencial) y plataformas (Sentinel-2, Landsat-5 y Landsat-8) emplean el cociente de bandas B04/B03 [@Shen2021].
 
 Modelos de estimación a partir de Sentinel-2 y Landsat-8 utilizan regresiones lineales, cuadráticas y logarítmicas empleando B02, B03, B04, B01 (con menos apariciones) y cocientes entre éstas [@Ouma2020].
 
-### Métodos de aprendizaje automático
+## Métodos de aprendizaje automático
 
 El aprendizaje automático es un subconjunto de la inteligencia artificial que permite que un sistema aprenda y mejore de forma autónoma, sin necesidad de una programación explícita, a través del análisis de grandes cantidades de datos. El aprendizaje automático permite que los sistemas informáticos se ajusten y mejoren continuamente a medida que acumulan más "experiencias". Por lo tanto, el rendimiento de estos sistemas puede mejorar si se proporcionan conjuntos de datos más grandes y variados para su procesamiento.
 
@@ -136,20 +118,13 @@ scikit [@Zhao2022].
 
 ::::
 
-:::: {.content-visible when-format="typst"}
+# Algoritmos 
+## Métodos tradicionales
+Proximamente...
 
-|Modelo de machine learning| Referencia |
-|:--|:-:|
-|SVR, ELM ,BP ,CART ,GBT ,RF ,KNN| [@Ma2021] |
-|eXtreme Gradient Boosting (XGBoost),  support vector regression (SVR), random forest (RF)| [@Yang2023] |
-| linear regression (LR), ridge regression (RR),  least absolute shrinkage and selection operator regression(LASSO), elastic net regression (ENR),  k-nearest neighbor regression (KNN), Gaussian process regression (GPR), decision tree regression (DTR), support vector regression (SVR), multilayer perceptron regression (MLP), adaptive boosting regression (ABR), gradient boosting regression (GBR), bootstrap aggregating regression (Bagging), random forest regression (RFR), and extreme tree regression (ETR) | [@Zhao2022] |
+## Métodos de aprendizaje automático 
+Proximamente...
 
-: Características principales de algoritmos de aprendizaje automático para la estimación de turbidez. {#tbl-turb-machine .striped .hover tbl-colwidths="[80,20]"}
-
-::: {.block stroke='rgb("#B86092")' inset="8pt" radius="4pt"}
-
-[Ver tabla completa en la versión online &#x2197;](https://vhgauto.quarto.pub/gistaq-parana/#tbl-turb-machine)
-
-:::
-
-::::
+# Imagen
+ 
+ ![Logo del GISTAQ](img/logo-gistaq.png){width=40% #fig-logo}
