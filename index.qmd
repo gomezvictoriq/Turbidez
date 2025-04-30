@@ -137,7 +137,11 @@ Proximamente...
  ![Logo del GISTAQ](img/logo-gistaq.png){width=40% #fig-logo}
 
 Prueba correr python desde index QMD
+## **Python**, con `sklearn`
 
+Se muestra a continuación el tutorial mostrado en para el modelo [Mínimos cuadrados ordinarios](https://scikit-learn.org/stable/auto_examples/linear_model/plot_ols.html#ordinary-least-squares-example).
+
+Importo la librería `sklearn`, funciones de interés y para generar figuras.
 
 ```{python}
 from sklearn.datasets import load_diabetes
