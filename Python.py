@@ -24,6 +24,10 @@ y_pred = regressor.predict(X_test)
 p_rmse = mean_squared_error(y_test, y_pred)
 p_r2 = r2_score(y_test, y_pred)
 
+
+print("RMSE", p_rmse)
+print("R2", p_r2)
+
 #Visualizo los resultados comparando el conjunto de entrenamiento y validación.
 
 
@@ -48,3 +52,6 @@ ax[1].legend()
 fig.suptitle("Regresión lineal")
 
 plt.show()
+
+
+
