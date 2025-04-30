@@ -124,6 +124,11 @@ scikit [@Zhao2022].
 ## Métodos tradicionales
 Proximamente...
 
+Figura de conjunto de entremaniento y validación
+
+![Entrenamiento y validación](D:\GIT\Turbidez\img\Figure_1.png){fig-align="center" width="100%"}
+
+
 ## Métodos de aprendizaje automático 
 Proximamente...
 
