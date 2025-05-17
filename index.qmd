@@ -122,15 +122,6 @@ scikit [@Zhao2022].
 
 # Algoritmos 
 ## Métodos tradicionales
-Proximamente...
-
-Figura de conjunto de entremaniento y validación
-
-![Entrenamiento y validación](D:\GIT\Turbidez\img\Figure_1.png){fig-align="center" width="100%"}
-
-
-## Métodos de aprendizaje automático 
-Proximamente...
 
 # Prueba correr python desde qmd
  
@@ -209,4 +200,10 @@ fig.suptitle("Regresión lineal")
 
 plt.show()
 ```
+
+
+
+
+## Métodos de aprendizaje automático 
+Proximamente...
 
