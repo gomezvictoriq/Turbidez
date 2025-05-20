@@ -309,14 +309,14 @@ import matplotlib.pyplot as plt
 ### Cargo los datos de interés y divido en entrenamiento y validación.
 
 Definimos X para que sea los valores de reflectancia de una banda en particular
-Defiinimos y para que sea la turbidez
+Definimos y para que sea la turbidez
 
 ```{python}
 
 df = pd.read_csv(r"D:\GIT\Turbidez\Turbidez_FINAL.csv")
 
 X = df[['B04']]  
-y = df['turbidez']   #acá tiene que ir turbidez
+y = df['turbidez']  
 
 
 X_train, X_test, y_train, y_test = train_test_split(
