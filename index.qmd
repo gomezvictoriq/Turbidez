@@ -136,7 +136,7 @@ En el proyecto tenemos dos archivos .csv que contienen los datos:
 import pandas as pd
 ```
 
-### Leemos los archivos .csv por separado, para eso definimos dos DataFrame 
+### Leemos los archivos .csv por separado y definimos dos DataFrame 
 
 Un DataFrame es basicamente una tabla, donde la información se organiza en filas y columnas. Los datos de la misma columna contienen el mismo tipo de datos, pandas agrega por defecto un "índice" que nos ayuda a identificar una fila en particular.
 
@@ -172,7 +172,7 @@ El valor de reflectancia de un único píxel (1x1) puede estar afectado por el d
 
 **IMPORTANTE**: Esta etapa es necesaria realizarla, porque hay valores de reflectancia tanto para píxles de 1x1 y de 3x3, y a la hora de operar con la tabla la librería *pandas* tomará ambos valores y realizará cálculos erroneos.
 
-Para esto, realizamos un filtrado de creamos un nuevo DataFrame **"df_gis3x3"**, el cual se obtiene al hacer un filtrado en el DataFrame original. 
+Para esto, realizamos un filtrado y creamos un nuevo DataFrame **"df_gis3x3"**, el cual se obtiene al hacer un filtrado en el DataFrame original. 
 
 ```{python}
 df_gis3x3 = df2_gis[(df2_gis['pixel'] == '3x3')]
@@ -182,7 +182,7 @@ print(df_gis3x3.head())
 
 ### Combinamos ambos DataFrame para tener los datos en una única base de datos.
 
-Lo defimos como **df_filtrado** , para esta estamos utilizamos la función *pd.merge* para realizar la combinación.
+Lo defimos como **df_combinado**, para esto utilizamos la función *pd.merge* para realizar la combinación.
 
 ```{python}
 df_combinado = pd.merge(df1_lab, df_gis3x3, on=['latitud', 'longitud','fecha'], how='inner')
@@ -220,6 +220,8 @@ Creamos un nuevo DataFrame a partir de *df_turbidez*. Con la función **.drop** 
 
 ```{python}
 df_turbidez_banda = df_turbidez.drop(columns=['longitud','latitud','punto','pixel','fecha','param'])
+
+print(df_turbidez_banda.head())
 ```
 
 **Nota:** Solo nos quedamos con las columnas valor,banda y reflect.
@@ -233,7 +235,7 @@ df_turbidez_banda.rename(columns={'valor': 'turbidez'}, inplace=True)
 print(df_turbidez_banda.head())
 ```
 
-### Creamos tabla final
+### Creamos la tabla final
 
 Usamos la función **.pivot_table** para que las columnas sean la turbidez y las distintas bandas de Sentinel-2 (B01, B02 , B03...)
 
@@ -278,20 +280,23 @@ df_final = df_turbidez_banda.pivot_table(
     columns='banda',
     values='reflect',  
     )
+
 df_final = df_final.reset_index() #Línea de código que se debe agregar
 ```
 
-reset_index() convierte el índice definido previamente como "turbidez" en una columna normal, y reemplaza el índice por uno numérico estándar (0, 1, 2...). que es el predeterminado por pandas.
+**reset_index()** convierte el índice definido previamente como "turbidez" en una columna normal y reemplaza el índice por uno numérico estándar (0, 1, 2...). que es el predeterminado por pandas.
 
 Finalmente exportamos como archivo csv.
 ```{python}
 df_final.to_csv('Turbidez_FINAL2.csv', index=False)
 ```
+
+
 # Algoritmos
 
 ## Regresion lineal con método de mínimos cuadrados
  
-### Importo las funciones que me interesan y leamos el archivo csv creado previamente mis datos
+Importamos las funciones que nos interesan y leemos el archivo csv creado previamente.
 
  ```{python}
 import pandas as pd
@@ -302,6 +307,9 @@ import matplotlib.pyplot as plt
 ```
 
 ### Cargo los datos de interés y divido en entrenamiento y validación.
+
+Definimos X para que sea los valores de reflectancia de una banda en particular
+Defiinimos y para que sea la turbidez
 
 ```{python}
 
@@ -333,7 +341,7 @@ print("RMSE", p_rmse)
 print("R2", p_r2)
 ```
 
-
+### Gráficas del conjunto de entrenamiento y validación
 ```{python}
 fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
 
