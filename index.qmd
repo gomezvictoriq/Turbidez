@@ -258,7 +258,7 @@ values='reflect'    ➤ El contenido de la tabla será lo que haya en la columna
 ### Creo archivo final con los valores de turbidez y reflectancia de cada banda
 
 #### Forma 1
-Creamos un .csv con los datos que nos interesan con la función *.to_csv*
+Creamos un .csv con los datos que nos interesan con la función **.to_csv**
 
  ```{python}
  df_final.to_csv('Turbidez_FINAL.csv', index=True)
@@ -270,7 +270,7 @@ Recordemos que la columna **index** es solo visible solo por la librería *panda
 Si al guardamos con **index=False**, se omite y no se guarda en el csv.
 
 #### Forma 2
-Si decidimos poner **index=False** tenemos que usar una funación adicional antes de exportar, debido a que la turbidez está en el índice, no como una columna.
+Si decidimos poner **index=False** tenemos que usar una función adicional antes de exportar, debido a que la turbidez está en el índice, no como una columna.
 
 Por lo tanto luego de hacer el pivot se debe agregar la suguiente línea de código
 

@@ -2347,13 +2347,13 @@ window.Quarto = {
   <li><a href="#procesamiento-de-datos" id="toc-procesamiento-de-datos" class="nav-link" data-scroll-target="#procesamiento-de-datos"><span class="header-section-number">2</span> Procesamiento de datos</a>
   <ul class="collapse">
   <li><a href="#importamos-la-librería-pandas-para-usarla-la-nombramos-como-pd-para-simplificar" id="toc-importamos-la-librería-pandas-para-usarla-la-nombramos-como-pd-para-simplificar" class="nav-link" data-scroll-target="#importamos-la-librería-pandas-para-usarla-la-nombramos-como-pd-para-simplificar"><span class="header-section-number">2.0.1</span> Importamos la librería <em>pandas</em> para usarla, la nombramos como “pd” para simplificar</a></li>
-  <li><a href="#leemos-los-archivos-.csv-por-separado-para-eso-definimos-dos-dataframe" id="toc-leemos-los-archivos-.csv-por-separado-para-eso-definimos-dos-dataframe" class="nav-link" data-scroll-target="#leemos-los-archivos-.csv-por-separado-para-eso-definimos-dos-dataframe"><span class="header-section-number">2.0.2</span> Leemos los archivos .csv por separado, para eso definimos dos DataFrame</a></li>
+  <li><a href="#leemos-los-archivos-.csv-por-separado-y-definimos-dos-dataframe" id="toc-leemos-los-archivos-.csv-por-separado-y-definimos-dos-dataframe" class="nav-link" data-scroll-target="#leemos-los-archivos-.csv-por-separado-y-definimos-dos-dataframe"><span class="header-section-number">2.0.2</span> Leemos los archivos .csv por separado y definimos dos DataFrame</a></li>
   <li><a href="#hacemos-un-filtrado-en-el-dataframe-de-datos-espectrales" id="toc-hacemos-un-filtrado-en-el-dataframe-de-datos-espectrales" class="nav-link" data-scroll-target="#hacemos-un-filtrado-en-el-dataframe-de-datos-espectrales"><span class="header-section-number">2.0.3</span> Hacemos un filtrado en el DataFrame de datos espectrales</a></li>
   <li><a href="#combinamos-ambos-dataframe-para-tener-los-datos-en-una-única-base-de-datos." id="toc-combinamos-ambos-dataframe-para-tener-los-datos-en-una-única-base-de-datos." class="nav-link" data-scroll-target="#combinamos-ambos-dataframe-para-tener-los-datos-en-una-única-base-de-datos."><span class="header-section-number">2.0.4</span> Combinamos ambos DataFrame para tener los datos en una única base de datos.</a></li>
   <li><a href="#filtramos-la-turbidez-del-dataframe" id="toc-filtramos-la-turbidez-del-dataframe" class="nav-link" data-scroll-target="#filtramos-la-turbidez-del-dataframe"><span class="header-section-number">2.0.5</span> Filtramos la turbidez del DataFrame</a></li>
   <li><a href="#eliminamos-las-columnas-que-no-nos-interesan" id="toc-eliminamos-las-columnas-que-no-nos-interesan" class="nav-link" data-scroll-target="#eliminamos-las-columnas-que-no-nos-interesan"><span class="header-section-number">2.0.6</span> Eliminamos las columnas que no nos interesan</a></li>
   <li><a href="#cambiamos-el-nombre-de-la-columna-valor-por-el-de-turbidez" id="toc-cambiamos-el-nombre-de-la-columna-valor-por-el-de-turbidez" class="nav-link" data-scroll-target="#cambiamos-el-nombre-de-la-columna-valor-por-el-de-turbidez"><span class="header-section-number">2.0.7</span> Cambiamos el nombre de la columna “valor” por el de “turbidez”</a></li>
-  <li><a href="#creamos-tabla-final" id="toc-creamos-tabla-final" class="nav-link" data-scroll-target="#creamos-tabla-final"><span class="header-section-number">2.0.8</span> Creamos tabla final</a></li>
+  <li><a href="#creamos-la-tabla-final" id="toc-creamos-la-tabla-final" class="nav-link" data-scroll-target="#creamos-la-tabla-final"><span class="header-section-number">2.0.8</span> Creamos la tabla final</a></li>
   <li><a href="#creo-archivo-final-con-los-valores-de-turbidez-y-reflectancia-de-cada-banda" id="toc-creo-archivo-final-con-los-valores-de-turbidez-y-reflectancia-de-cada-banda" class="nav-link" data-scroll-target="#creo-archivo-final-con-los-valores-de-turbidez-y-reflectancia-de-cada-banda"><span class="header-section-number">2.0.9</span> Creo archivo final con los valores de turbidez y reflectancia de cada banda</a></li>
   </ul></li>
   <li><a href="#algoritmos" id="toc-algoritmos" class="nav-link" data-scroll-target="#algoritmos"><span class="header-section-number">3</span> Algoritmos</a>
@@ -2585,15 +2585,15 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p>-base_de_datos_gis.csv → contiene datos espectrales</p>
 <section id="importamos-la-librería-pandas-para-usarla-la-nombramos-como-pd-para-simplificar" class="level3" data-number="2.0.1">
 <h3 data-number="2.0.1" class="anchored" data-anchor-id="importamos-la-librería-pandas-para-usarla-la-nombramos-como-pd-para-simplificar"><span class="header-section-number">2.0.1</span> Importamos la librería <em>pandas</em> para usarla, la nombramos como “pd” para simplificar</h3>
-<div id="98509c79" class="cell" data-execution_count="1">
+<div id="7fde5cbb" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="leemos-los-archivos-.csv-por-separado-para-eso-definimos-dos-dataframe" class="level3" data-number="2.0.2">
-<h3 data-number="2.0.2" class="anchored" data-anchor-id="leemos-los-archivos-.csv-por-separado-para-eso-definimos-dos-dataframe"><span class="header-section-number">2.0.2</span> Leemos los archivos .csv por separado, para eso definimos dos DataFrame</h3>
+<section id="leemos-los-archivos-.csv-por-separado-y-definimos-dos-dataframe" class="level3" data-number="2.0.2">
+<h3 data-number="2.0.2" class="anchored" data-anchor-id="leemos-los-archivos-.csv-por-separado-y-definimos-dos-dataframe"><span class="header-section-number">2.0.2</span> Leemos los archivos .csv por separado y definimos dos DataFrame</h3>
 <p>Un DataFrame es basicamente una tabla, donde la información se organiza en filas y columnas. Los datos de la misma columna contienen el mismo tipo de datos, pandas agrega por defecto un “índice” que nos ayuda a identificar una fila en particular.</p>
 <p>Con la función <em>pd.read_csv</em> le idicamos a pandas que queremos leer archivos .csv.</p>
-<div id="45c7dcb3" class="cell" data-execution_count="2">
+<div id="6bc6b42d" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df1_lab <span class="op">=</span> pd.read_csv(<span class="vs">r&quot;D:</span><span class="dv">\G</span><span class="vs">IT</span><span class="er">\</span><span class="vs">Turbidez</span><span class="dv">\d</span><span class="vs">atos</span><span class="dv">\b</span><span class="vs">ase_de_datos_lab</span><span class="dv">.</span><span class="vs">csv&quot;</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df2_gis <span class="op">=</span> pd.read_csv(<span class="vs">r&quot;D:</span><span class="dv">\G</span><span class="vs">IT</span><span class="er">\</span><span class="vs">Turbidez</span><span class="dv">\d</span><span class="vs">atos</span><span class="dv">\b</span><span class="vs">ase_de_datos_gis</span><span class="dv">.</span><span class="vs">csv&quot;</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -2602,7 +2602,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p><strong>Nota:</strong> Se debió colocar la “r” delante de la direccion para que lea los archivos.</p>
 <p>Video de YouTube <a href="https://www.youtube.com/watch?v=LnH_STJ2GXo">¿Qué es un DataFrame?</a></p>
 <p>Verificamos que los datos se han leído y se crearon correctamente ambos DataFrame por separado, con <em>print</em></p>
-<div id="a82a3c0b" class="cell" data-execution_count="3">
+<div id="b1b05406" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df1_lab.head())</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df2_gis)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -2635,8 +2635,8 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p>En la tabla original de los datos espectrales en la columna <em>pixel</em> se menciona 1x1 y 3x3. Cada píxel contiene un valor de reflectancia medida por el sensor de Sentinel-2.</p>
 <p>El valor de reflectancia de un único píxel (1x1) puede estar afectado por el de los píxeles adyacentes. Para considerar este efecto, se reliazó una grila de 3x3 aldedor del pixel central. Luego se calcula el promedio de la reflectancia de todos los píxeles (incluído el central). Tomamos este valor promedio para nuestro estudio, por lo que se conservan unicamente las filas donde pixel=3x3,</p>
 <p><strong>IMPORTANTE</strong>: Esta etapa es necesaria realizarla, porque hay valores de reflectancia tanto para píxles de 1x1 y de 3x3, y a la hora de operar con la tabla la librería <em>pandas</em> tomará ambos valores y realizará cálculos erroneos.</p>
-<p>Para esto, realizamos un filtrado de creamos un nuevo DataFrame <strong>“df_gis3x3”</strong>, el cual se obtiene al hacer un filtrado en el DataFrame original.</p>
-<div id="20357771" class="cell" data-execution_count="4">
+<p>Para esto, realizamos un filtrado y creamos un nuevo DataFrame <strong>“df_gis3x3”</strong>, el cual se obtiene al hacer un filtrado en el DataFrame original.</p>
+<div id="ff21103d" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>df_gis3x3 <span class="op">=</span> df2_gis[(df2_gis[<span class="st">&#39;pixel&#39;</span>] <span class="op">==</span> <span class="st">&#39;3x3&#39;</span>)]</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_gis3x3.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -2652,14 +2652,14 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 </section>
 <section id="combinamos-ambos-dataframe-para-tener-los-datos-en-una-única-base-de-datos." class="level3" data-number="2.0.4">
 <h3 data-number="2.0.4" class="anchored" data-anchor-id="combinamos-ambos-dataframe-para-tener-los-datos-en-una-única-base-de-datos."><span class="header-section-number">2.0.4</span> Combinamos ambos DataFrame para tener los datos en una única base de datos.</h3>
-<p>Lo defimos como <strong>df_filtrado</strong> , para esta estamos utilizamos la función <em>pd.merge</em> para realizar la combinación.</p>
-<div id="d900a69c" class="cell" data-execution_count="5">
+<p>Lo defimos como <strong>df_combinado</strong>, para esto utilizamos la función <em>pd.merge</em> para realizar la combinación.</p>
+<div id="da94d14d" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>df_combinado <span class="op">=</span> pd.merge(df1_lab, df_gis3x3, on<span class="op">=</span>[<span class="st">&#39;latitud&#39;</span>, <span class="st">&#39;longitud&#39;</span>,<span class="st">&#39;fecha&#39;</span>], how<span class="op">=</span><span class="st">&#39;inner&#39;</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>on=[‘latitud’, ‘longitud’,‘fecha’]</strong> Especifica las columnas por las cuales se unirán los dos DataFrames. En este caso, por coincidencias exactas en latitud, longitud y fecha.</p>
 <p><strong>how=‘inner’</strong> Es el tipo de unión, significa que solo se conservarán las filas que tengan coincidencias en ambos DataFrames en las columnas mencionadas.</p>
 <p>Verificamos que la combinacion se haya realizado correctamente</p>
-<div id="2523a3d2" class="cell" data-execution_count="6">
+<div id="1f2b84fd" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_combinado.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        fecha   longitud    latitud param  valor  punto pixel banda   reflect
@@ -2675,11 +2675,11 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <h3 data-number="2.0.5" class="anchored" data-anchor-id="filtramos-la-turbidez-del-dataframe"><span class="header-section-number">2.0.5</span> Filtramos la turbidez del DataFrame</h3>
 <p>Del DataFrame combinado, solo nos interesa las filas que contengan los valores de turbidez, ya que es la propiedad de estudio en este sitio web. Por ello nos quedamos con las filas en donde la columna <em>param</em> sea igual a <em>turb</em>.</p>
 <p>Creamos un nuevo DataFrame a partir de <em>df_combinado</em>.</p>
-<div id="6128e388" class="cell" data-execution_count="7">
+<div id="7efbb3bd" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>df_turbidez <span class="op">=</span> df_combinado[(df_combinado[<span class="st">&#39;param&#39;</span>] <span class="op">==</span> <span class="st">&#39;turb&#39;</span>)]</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Verificamos</p>
-<div id="08cb57b1" class="cell" data-execution_count="8">
+<div id="e1deaef5" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_turbidez.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>         fecha   longitud    latitud param  valor  punto pixel banda   reflect
@@ -2695,18 +2695,28 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <section id="eliminamos-las-columnas-que-no-nos-interesan" class="level3" data-number="2.0.6">
 <h3 data-number="2.0.6" class="anchored" data-anchor-id="eliminamos-las-columnas-que-no-nos-interesan"><span class="header-section-number">2.0.6</span> Eliminamos las columnas que no nos interesan</h3>
 <p>Creamos un nuevo DataFrame a partir de <em>df_turbidez</em>. Con la función <strong>.drop</strong> especificamos que columnas queremos eliminar.</p>
-<div id="333808bd" class="cell" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>df_turbidez_banda <span class="op">=</span> df_turbidez.drop(columns<span class="op">=</span>[<span class="st">&#39;longitud&#39;</span>,<span class="st">&#39;latitud&#39;</span>,<span class="st">&#39;punto&#39;</span>,<span class="st">&#39;pixel&#39;</span>,<span class="st">&#39;fecha&#39;</span>,<span class="st">&#39;param&#39;</span>])</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="aed6ca3c" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>df_turbidez_banda <span class="op">=</span> df_turbidez.drop(columns<span class="op">=</span>[<span class="st">&#39;longitud&#39;</span>,<span class="st">&#39;latitud&#39;</span>,<span class="st">&#39;punto&#39;</span>,<span class="st">&#39;pixel&#39;</span>,<span class="st">&#39;fecha&#39;</span>,<span class="st">&#39;param&#39;</span>])</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_turbidez_banda.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    valor banda   reflect
+33  185.5   B01  0.161290
+34  185.5   B02  0.171256
+35  185.5   B03  0.206644
+36  185.5   B04  0.250911
+37  185.5   B05  0.258058</code></pre>
+</div>
 </div>
 <p><strong>Nota:</strong> Solo nos quedamos con las columnas valor,banda y reflect.</p>
 </section>
 <section id="cambiamos-el-nombre-de-la-columna-valor-por-el-de-turbidez" class="level3" data-number="2.0.7">
 <h3 data-number="2.0.7" class="anchored" data-anchor-id="cambiamos-el-nombre-de-la-columna-valor-por-el-de-turbidez"><span class="header-section-number">2.0.7</span> Cambiamos el nombre de la columna “valor” por el de “turbidez”</h3>
 <p>Como los valores de esa columna son de turbidez, directamente cambiamos el nombre de la columna con la función <strong>.rename</strong></p>
-<div id="dbce8a80" class="cell" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>df_turbidez_banda.rename(columns<span class="op">=</span>{<span class="st">&#39;valor&#39;</span>: <span class="st">&#39;turbidez&#39;</span>}, inplace<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_turbidez_banda.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="2c9e2755" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df_turbidez_banda.rename(columns<span class="op">=</span>{<span class="st">&#39;valor&#39;</span>: <span class="st">&#39;turbidez&#39;</span>}, inplace<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_turbidez_banda.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>    turbidez banda   reflect
 33     185.5   B01  0.161290
@@ -2717,10 +2727,10 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 </div>
 </div>
 </section>
-<section id="creamos-tabla-final" class="level3" data-number="2.0.8">
-<h3 data-number="2.0.8" class="anchored" data-anchor-id="creamos-tabla-final"><span class="header-section-number">2.0.8</span> Creamos tabla final</h3>
+<section id="creamos-la-tabla-final" class="level3" data-number="2.0.8">
+<h3 data-number="2.0.8" class="anchored" data-anchor-id="creamos-la-tabla-final"><span class="header-section-number">2.0.8</span> Creamos la tabla final</h3>
 <p>Usamos la función <strong>.pivot_table</strong> para que las columnas sean la turbidez y las distintas bandas de Sentinel-2 (B01, B02 , B03…)</p>
-<p>::: {#98390cd8 .cell execution_count=11} <code>{.python .cell-code}  df_final= df_turbidez_banda.pivot_table(     index=&#39;turbidez&#39;,     columns=&#39;banda&#39;,     values=&#39;reflect&#39;,       )</code> :::</p>
+<p>::: {#42051c60 .cell execution_count=11} <code>{.python .cell-code}  df_final= df_turbidez_banda.pivot_table(     index=&#39;turbidez&#39;,     columns=&#39;banda&#39;,     values=&#39;reflect&#39;,       )</code> :::</p>
 <p>¿Qué significa cada término en el argumento de la función pivot_table?</p>
 <p>index=‘turbidez’, ➤ Las filas serán los valores únicos de ‘turbidez’</p>
 <p>columns=‘banda’, ➤ Las columnas serán los valores únicos de ‘banda’ (B01, B02…)</p>
@@ -2730,28 +2740,28 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <h3 data-number="2.0.9" class="anchored" data-anchor-id="creo-archivo-final-con-los-valores-de-turbidez-y-reflectancia-de-cada-banda"><span class="header-section-number">2.0.9</span> Creo archivo final con los valores de turbidez y reflectancia de cada banda</h3>
 <section id="forma-1" class="level4" data-number="2.0.9.1">
 <h4 data-number="2.0.9.1" class="anchored" data-anchor-id="forma-1"><span class="header-section-number">2.0.9.1</span> Forma 1</h4>
-<p>Creamos un .csv con los datos que nos interesan con la función <em>.to_csv</em></p>
-<p>::: {#ffe2f39a .cell execution_count=12} <code>{.python .cell-code}  df_final.to_csv(&#39;Turbidez_FINAL.csv&#39;, index=True)</code> :::</p>
+<p>Creamos un .csv con los datos que nos interesan con la función <strong>.to_csv</strong></p>
+<p>::: {#23c34025 .cell execution_count=12} <code>{.python .cell-code}  df_final.to_csv(&#39;Turbidez_FINAL.csv&#39;, index=True)</code> :::</p>
 <p><strong>IMPORTANTE:</strong> <strong>index=True</strong> , debe ser así para que el índice que definimos al pivotar sea una columna visible en el archivo csv.</p>
 <p>Recordemos que la columna <strong>index</strong> es solo visible solo por la librería <em>pandas</em>, Si al guardamos con <strong>index=False</strong>, se omite y no se guarda en el csv.</p>
 </section>
 <section id="forma-2" class="level4" data-number="2.0.9.2">
 <h4 data-number="2.0.9.2" class="anchored" data-anchor-id="forma-2"><span class="header-section-number">2.0.9.2</span> Forma 2</h4>
-<p>Si decidimos poner <strong>index=False</strong> tenemos que usar una funación adicional antes de exportar, debido a que la turbidez está en el índice, no como una columna.</p>
+<p>Si decidimos poner <strong>index=False</strong> tenemos que usar una función adicional antes de exportar, debido a que la turbidez está en el índice, no como una columna.</p>
 <p>Por lo tanto luego de hacer el pivot se debe agregar la suguiente línea de código</p>
-<div id="36f881f5" class="cell" data-execution_count="13">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df_turbidez_banda.pivot_table(</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="st">&#39;turbidez&#39;</span>,</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="st">&#39;banda&#39;</span>,</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    values<span class="op">=</span><span class="st">&#39;reflect&#39;</span>,  </span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df_final.reset_index() <span class="co">#Línea de código que se debe agregar</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="890b595d" class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df_turbidez_banda.pivot_table(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="st">&#39;turbidez&#39;</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="st">&#39;banda&#39;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    values<span class="op">=</span><span class="st">&#39;reflect&#39;</span>,  </span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df_final.reset_index() <span class="co">#Línea de código que se debe agregar</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>reset_index()</strong> convierte el índice definido previamente como “turbidez” en una columna normal y reemplaza el índice por uno numérico estándar (0, 1, 2…). que es el predeterminado por pandas.</p>
 <p>Finalmente exportamos como archivo csv.</p>
-<div id="6486cd8d" class="cell" data-execution_count="14">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df_final.to_csv(<span class="st">&#39;Turbidez_FINAL2.csv&#39;</span>, index<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="7453ead9" class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>df_final.to_csv(<span class="st">&#39;Turbidez_FINAL2.csv&#39;</span>, index<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
@@ -2767,6 +2777,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 
 Definimos X para que sea los valores de reflectancia de una banda en particular
 Defiinimos y para que sea la turbidez
+
 ```{python}
 
 df = pd.read_csv(r&quot;D:\GIT\Turbidez\Turbidez_FINAL.csv&quot;)
