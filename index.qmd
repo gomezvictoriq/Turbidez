@@ -178,6 +178,7 @@ Para esto, realizamos un filtrado y creamos un nuevo DataFrame **"df_gis3x3"**, 
 df_gis3x3 = df2_gis[(df2_gis['pixel'] == '3x3')]
 print(df_gis3x3.head())
 ```
+
 **Nota:** se conserva el índice del original
 
 ### Combinamos ambos DataFrame para tener los datos en una única base de datos.
@@ -239,13 +240,13 @@ print(df_turbidez_banda.head())
 
 Usamos la función **.pivot_table** para que las columnas sean la turbidez y las distintas bandas de Sentinel-2 (B01, B02 , B03...)
 
- ```{python}
+```{python}
 df_final = df_turbidez_banda.pivot_table(
     index='turbidez',
     columns='banda',
     values='reflect',  
     )
- ```
+```
 
 ¿Qué significa cada término en el argumento de la función pivot_table?
 
@@ -260,9 +261,9 @@ values='reflect'    ➤ El contenido de la tabla será lo que haya en la columna
 #### Forma 1
 Creamos un .csv con los datos que nos interesan con la función **.to_csv**
 
- ```{python}
+```{python}
  df_final.to_csv('Turbidez_FINAL.csv', index=True)
- ```
+```
 
 **IMPORTANTE:** **index=True** , debe ser así para que el índice que definimos al pivotar sea una columna visible en el archivo csv.
 
@@ -291,14 +292,18 @@ Finalmente exportamos como archivo csv.
 df_final.to_csv('Turbidez_FINAL2.csv', index=False)
 ```
 
-
 # Algoritmos
 
-## Regresion lineal con método de mínimos cuadrados
+## Regresión lineal con método de mínimos cuadrados
  
-Importamos las funciones que nos interesan y leemos el archivo csv creado previamente.
+Debemos importar las funciones necesarias para:
 
- ```{python}
+1- Leer el archivo .csv creado previamente , que contiene los datos de turbidez y los valores de reflectancia para cada banda.
+
+2- Para usar el método de mínimos cuadrados
+
+### Importamos las funciones
+```{python}
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -306,42 +311,76 @@ from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 ```
 
-### Cargo los datos de interés y divido en entrenamiento y validación.
+*pandas* → para leer los datos
 
-Definimos X para que sea los valores de reflectancia de una banda en particular
-Definimos y para que sea la turbidez
+*train_test_split* → para dividir los datos en entrenamiento y validación
+
+*LinearRegression* → para crear el modelo de regresión lineal
+
+*mean_squared_error* y *r2_score* → Para medir el desempeño del modelo (RMSE y R2)
+
+*matplotlib.pyplot* → para realizar gráficos
+
+### Leemos los datos de interés y los dividimos en entrenamiento y validación.
 
 ```{python}
-
 df = pd.read_csv(r"D:\GIT\Turbidez\Turbidez_FINAL.csv")
 
 X = df[['B04']]  
 y = df['turbidez']  
+```
 
+Definimos: 
 
+**df**, un DataFrame que contiene los datos de turbidez y reflectancia;
+
+**X** para que sea los valores de reflectancia de una banda en particular;
+
+**y** para que sea la turbidez.
+
+### Dividimos en datos para el entrenamiento y validación
+```{python}
 X_train, X_test, y_train, y_test = train_test_split(
   X, y, test_size=20, shuffle=True  #hace una mezcla 
 )
 ```
 
-### Creo el modelo de regresión 
+Conjunto de datos para el entrenamiento
+**X_train** y **X_test**
+
+Conjunto de datos para la validación
+**y_train** y **y_test**
+
+### Creamos el modelo de regresión 
 
 ```{python}
 regressor = LinearRegression().fit(X_train, y_train)
 ```
 
-### Evalúo el modelo generado a partir de las métricas de desempeño.
+**LinearRegression()** Crea el modelo de regresión lineal llamado "*regressor*". Este modelo, se entrena con la función **.fit** a partir de los datos de entrenamiento (X_train, y_train)
+
+
+### Evaluamos el modelo generado a partir de las métricas de desempeño.
 
 ```{python}
 y_pred = regressor.predict(X_test)
 p_rmse = mean_squared_error(y_test, y_pred)
 p_r2 = r2_score(y_test, y_pred)
-
+```
+Con la función **print** visualizamos los valores de las métircas de desempeño
+```{python}
 print("RMSE", p_rmse) 
 print("R2", p_r2)
 ```
 
-### Gráficas del conjunto de entrenamiento y validación
+::: {.callout-note icon="false" title="Métricas de desempeño"}
+El error cuadrático medio es: `{r} round(py$p_rmse, 3)`.
+
+El coeficiente de determinación (R<sup>2</sup>) es: `{r} round(py$p_r2, 3)`.
+:::
+
+
+### Graficamos el modelo tanto con el conjunto de entrenamiento y validación
 ```{python}
 fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
 
@@ -356,20 +395,19 @@ ax[0].plot(
 
 
 ax[0].scatter(X_train, y_train, label="Entrenamiento", color = "#9D50A6", alpha = .6)
-ax[0].set(xlabel="Característica", ylabel="Objetivo", title="Conjunto de entrenamiento")
+ax[0].set(xlabel="Banda", ylabel="Turbidez", title="Conjunto de entrenamiento")
 ax[0].legend()
 
 #Gráfico de validación
 ax[1].plot(X_test, y_pred, linewidth=3, color="#17A77E", label="Modelo")
 ax[1].scatter(X_test, y_test, label="Validación", color = "#9D50A6", alpha = .6)
-ax[1].set(xlabel="Característica", ylabel="Objetivo", title="Conjunto de validación")
+ax[1].set(xlabel="Banda", ylabel="Turbidez", title="Conjunto de validación")
 ax[1].legend()
 
 fig.suptitle("Regresión lineal")
 
 plt.show()
 ```
-
 
 
 
