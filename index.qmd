@@ -250,11 +250,11 @@ df_final = df_turbidez_banda.pivot_table(
 
 ¿Qué significa cada término en el argumento de la función pivot_table?
 
-index='turbidez',   ➤ Las filas serán los valores únicos de 'turbidez'
+index='turbidez' → Las filas serán los valores únicos de 'turbidez'
 
-columns='banda',    ➤ Las columnas serán los valores únicos de 'banda' (B01, B02...)
+columns='banda'  → Las columnas serán los valores únicos de 'banda' (B01, B02...)
 
-values='reflect'    ➤ El contenido de la tabla será lo que haya en la columna 'reflect'
+values='reflect' → El contenido de la tabla será lo que haya en la columna 'reflect'
 
 ### Creo archivo final con los valores de turbidez y reflectancia de cada banda
 
@@ -273,7 +273,7 @@ Si al guardamos con **index=False**, se omite y no se guarda en el csv.
 #### Forma 2
 Si decidimos poner **index=False** tenemos que usar una función adicional antes de exportar, debido a que la turbidez está en el índice, no como una columna.
 
-Por lo tanto luego de hacer el pivot se debe agregar la suguiente línea de código
+Por lo tanto luego de hacer el pivot se debe agregar una línea de código.
 
 ```{python}
 df_final = df_turbidez_banda.pivot_table(
@@ -322,6 +322,7 @@ import matplotlib.pyplot as plt
 *matplotlib.pyplot* → para realizar gráficos
 
 ### Leemos los datos de interés y los dividimos en entrenamiento y validación.
+Lectura de datos, lo hacemos con *pd.read_csv*
 
 ```{python}
 df = pd.read_csv(r"D:\GIT\Turbidez\Turbidez_FINAL.csv")
@@ -338,7 +339,7 @@ Definimos:
 
 **y** para que sea la turbidez.
 
-### Dividimos en datos para el entrenamiento y validación
+Dividimos en datos para el entrenamiento y validación
 ```{python}
 X_train, X_test, y_train, y_test = train_test_split(
   X, y, test_size=20, shuffle=True  #hace una mezcla 
@@ -373,6 +374,19 @@ print("RMSE", p_rmse)
 print("R2", p_r2)
 ```
 
+Para ver los coeficientes del regresor
+
+```{python}
+# Coeficientes (pendientes)
+coef = regressor.coef_
+
+# Intercepto (ordenada al origen)
+intercept = regressor.intercept_
+
+print(f"La ecuación es: y = {coef[0]:.3f}x + {intercept:.3f}")
+
+```
+
 ::: {.callout-note icon="false" title="Métricas de desempeño"}
 El error cuadrático medio es: `{r} round(py$p_rmse, 3)`.
 
@@ -394,15 +408,26 @@ ax[0].plot(
 )
 
 
+
 ax[0].scatter(X_train, y_train, label="Entrenamiento", color = "#9D50A6", alpha = .6)
-ax[0].set(xlabel="Banda", ylabel="Turbidez", title="Conjunto de entrenamiento")
+ax[0].set(xlabel="Banda 4", ylabel="Turbidez", title="Conjunto de entrenamiento")
 ax[0].legend()
 
 #Gráfico de validación
 ax[1].plot(X_test, y_pred, linewidth=3, color="#17A77E", label="Modelo")
 ax[1].scatter(X_test, y_test, label="Validación", color = "#9D50A6", alpha = .6)
-ax[1].set(xlabel="Banda", ylabel="Turbidez", title="Conjunto de validación")
+ax[1].set(xlabel="Banda 4", ylabel="Turbidez", title="Conjunto de validación")
 ax[1].legend()
+
+# Ecuación de la recta
+coef = regressor.coef_[0]
+intercept = regressor.intercept_
+equation = f"y = {coef:.2f}x + {intercept:.2f}"
+# Mostrar la ecuación en ambos subgráficos (opcionalmente, puedes usar solo uno)
+for a in ax:
+    a.text(0.05, 0.95, equation, transform=a.transAxes,
+           fontsize=10, verticalalignment='top',
+           bbox=dict(boxstyle="round", facecolor="white", alpha=0.7))
 
 fig.suptitle("Regresión lineal")
 

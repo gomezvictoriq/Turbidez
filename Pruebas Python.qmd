@@ -184,6 +184,23 @@ ax[1].scatter(X_test, y_test, label="Validación", color = "#9D50A6", alpha = .6
 ax[1].set(xlabel="Característica", ylabel="Objetivo", title="Conjunto de validación")
 ax[1].legend()
 
+
+
+# Ecuación de la recta
+coef = regressor.coef_[0]
+intercept = regressor.intercept_
+equation = f"y = {coef:.2f}x + {intercept:.2f}"
+
+# Mostrar la ecuación en ambos subgráficos (opcionalmente, puedes usar solo uno)
+for a in ax:
+    a.text(0.05, 0.95, equation, transform=a.transAxes,
+           fontsize=10, verticalalignment='top',
+           bbox=dict(boxstyle="round", facecolor="white", alpha=0.7))
+
+
+
+
+
 fig.suptitle("Regresión lineal")
 
 plt.show()
