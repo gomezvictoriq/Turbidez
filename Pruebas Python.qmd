@@ -207,4 +207,23 @@ plt.show()
 ```
 
 
+## Prueba de correlacion entre turbidez y cada banda
+
+```{python}
+import pandas as pd
+import numpy as np
+
+df= pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+print (df.head())
+
+
+```
+Calculo el coeficiente de correlación *r* entre la turbidez y las distintas
+```{python}
+correlaciones = df.corr(method='pearson')
+correlacion_turbidez = correlaciones['turbidez'].filter(like='B')
+print(correlacion_turbidez)
+
+```
+
 

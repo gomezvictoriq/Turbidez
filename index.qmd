@@ -312,7 +312,7 @@ Debemos importar las funciones necesarias para:
 
 2- Para usar el método de mínimos cuadrados
 
-### Importamos las funciones
+**Importamos las funciones**
 ```{python}
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -331,7 +331,8 @@ import matplotlib.pyplot as plt
 
 *matplotlib.pyplot* → para realizar gráficos
 
-### Leemos los datos de interés y los dividimos en entrenamiento y validación.
+**Leemos los datos de interés y los dividimos en entrenamiento y validación.**
+
 Lectura de datos, lo hacemos con *pd.read_csv*
 
 ```{python}
@@ -349,7 +350,7 @@ Definimos:
 
 **y** para que sea la turbidez.
 
-Dividimos en datos para el entrenamiento y validación
+**Dividimos en datos para el entrenamiento y validación**
 ```{python}
 X_train, X_test, y_train, y_test = train_test_split(
   X, y, test_size=20, shuffle=True  #hace una mezcla 
@@ -362,7 +363,7 @@ Conjunto de datos para el entrenamiento
 Conjunto de datos para la validación
 **y_train** y **y_test**
 
-### Creamos el modelo de regresión 
+**Creamos el modelo de regresión**
 
 ```{python}
 regressor = LinearRegression().fit(X_train, y_train)
@@ -371,7 +372,7 @@ regressor = LinearRegression().fit(X_train, y_train)
 **LinearRegression()** Crea el modelo de regresión lineal llamado "*regressor*". Este modelo, se entrena con la función **.fit** a partir de los datos de entrenamiento (X_train, y_train)
 
 
-### Evaluamos el modelo generado a partir de las métricas de desempeño.
+**Evaluamos el modelo generado a partir de las métricas de desempeño.**
 
 ```{python}
 y_pred = regressor.predict(X_test)
@@ -396,7 +397,7 @@ intercept = regressor.intercept_
 print(f"La ecuación es: y = {coef[0]:.3f}x + {intercept:.3f}")
 ```
 
-### Visualizamos los resultados comparando el conjunto de entrenamiento y validación.
+**Visualizamos los resultados comparando el conjunto de entrenamiento y validación.**
 ```{python}
 fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
 
@@ -433,6 +434,248 @@ fig.suptitle("Regresión lineal")
 
 plt.show()
 ```
+
+
+## Prueba de correlacion entre turbidez y cada banda
+Para ser mas rigurosos, agregamos mas etapas durante el entrenamiento de nuestro modelo lineal.
+
+**Importamos *pandas* para leer los datos**
+
+```{python}
+import pandas as pd
+
+Datos= pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+print (Datos.head())
+```
+
+**Calculamos coeficiente de correlacion r entre la turbidez y cada banda**
+
+Esta medida indica cuánto se relacionan dos variables de -1 a +1: 
+
++1 correlación perfecta positiva
+ 0 sin correlación
+-1 correlación perfecta negativa
+
+```{python}
+bandas = [col for col in Datos.columns if col.startswith('B')]
+for banda in bandas:
+    r = Datos['turbidez'].corr(Datos[banda])
+    print(f"Correlación entre turbidez y {banda}: {r:.4f}")
+```
+
+Observamos que la mejor correlación se da con banda **B05: 0.8719**
+
+```{python}
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 6))
+plt.scatter(Datos['B05'], Datos['turbidez'], color='blue', alpha=0.7)
+plt.xlabel('B05')
+plt.ylabel('Turbidez')
+plt.title('Turbidez en función de B05')
+plt.grid(True)
+plt.show()
+
+```
+
+### Probamos aplicando logaritmo natural en la columna turbidez y verificamos la correlacion con cada banda
+
+Importamos *nunpy* para operar con funciones matemáticas
+
+Creaamos un nuevo DataFrame para aplicarle el logaritmo a la colomna turbidez 
+
+```{python}
+import numpy as np
+
+Datos_turb_log = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+Datos_turb_log['turbidez'] = np.log(Datos_turb_log['turbidez'])
+
+#Cambio el nombre la columna "turbidez" luego de aplicar el logaritmo
+Datos_turb_log = Datos_turb_log.rename(columns={'turbidez': 'ln_turbidez'})
+
+print(Datos_turb_log.head())
+
+```
+
+Calculamos *r* entre el ln(turbidez) y cada banda
+
+```{python}
+bandas = [col for col in Datos.columns if col.startswith('B')]
+for banda in bandas:
+    r = Datos_turb_log['ln_turbidez'].corr(Datos_turb_log[banda])
+    print(f"Correlación entre ln(turbidez) y {banda}: {r:.4f}")
+```
+
+```{python}
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 6))
+plt.scatter(Datos_turb_log['B05'], Datos_turb_log['ln_turbidez'], color='blue', alpha=0.7)
+plt.xlabel('B05')
+plt.ylabel('ln_turbidez')
+plt.title('ln_turbidez en función de B05')
+plt.grid(True)
+plt.show()
+
+```
+
+### Probamos aplicando ln en la columna turbidez y en todas las bandas, para luego verificar la correlación
+
+Importamos *nunpy* para operar con funciones matemáticas
+
+Creaamos un nuevo DataFrame para aplicarle el logaritmo a todas las columnas 
+
+```{python}
+import numpy as np
+
+Datos_log = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+Datos_log = np.log(Datos_log)
+#Cambiamos en nombre las columnas, agremamos ln_ a cada columna
+Datos_log.columns = ['ln_' + col for col in Datos_log.columns]
+
+
+print(Datos_log.head())
+
+```
+
+Calculamos *r* entre el ln(turbidez) y cada banda
+
+```{python}
+
+bandas_ln = [col for col in Datos_log.columns if col.startswith('ln_B')]
+
+#Calculamos y mostrarmos la correlación del ln de cada banda con ln_turbidez
+for banda in bandas_ln:
+    r = Datos_log['ln_turbidez'].corr(Datos_log[banda])
+    print(f"Correlación entre ln_turbidez y {banda}: {r:.4f}")
+```
+```{python}
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 6))
+plt.scatter(Datos_log['ln_B05'], Datos_log['ln_turbidez'], color='blue', alpha=0.7)
+plt.xlabel('ln_B05')
+plt.ylabel('ln_turbidez')
+plt.title('ln_turbidez en función de ln_B05')
+plt.grid(True)
+plt.show()
+
+```
+
+
+### Entrenamos el modelo lineal con el método de mínimos cudrados
+
+**Importamos las funciones**
+```{python}
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+```
+
+**Dividimos los datos en entrenamiento y validación.**
+
+```{python}
+X = Datos_log[['ln_B05']]  
+y = Datos_log['ln_turbidez']  
+```
+
+Definimos: 
+
+**df**, un DataFrame que contiene los datos de turbidez y reflectancia;
+
+**X** para que sea los valores de reflectancia de una banda en particular;
+
+**y** para que sea la turbidez.
+
+**Dividimos en datos para el entrenamiento y validación**
+```{python}
+X_train, X_test, y_train, y_test = train_test_split(
+  X, y, test_size=20, shuffle=True  #hace una mezcla 
+)
+
+#test_size=0.25 significa que usamos el 25% de los datos para el testeo y el %75 restante para el entrenamiento 
+```
+
+Conjunto de datos para el entrenamiento
+**X_train** y **X_test**
+
+Conjunto de datos para la validación
+**y_train** y **y_test**
+
+**Creamos el modelo de regresión**
+
+```{python}
+regressor = LinearRegression().fit(X_train, y_train)
+```
+
+**LinearRegression()** Crea el modelo de regresión lineal llamado "*regressor*". Este modelo, se entrena con la función **.fit** a partir de los datos de entrenamiento (X_train, y_train)
+
+
+**Evaluamos el modelo generado a partir de las métricas de desempeño.**
+
+```{python}
+y_pred = regressor.predict(X_test)
+p_rmse = mean_squared_error(y_test, y_pred)
+p_r2 = r2_score(y_test, y_pred)
+```
+Con la función **print** visualizamos los valores de las métricas de desempeño
+```{python}
+print("RMSE", p_rmse) 
+print("R2", p_r2)
+```
+
+Para ver la ecuación del modelo de regresión
+
+```{python}
+# Coeficientes (pendientes)
+coef = regressor.coef_
+
+# Intercepto (ordenada al origen)
+intercept = regressor.intercept_
+
+print(f"La ecuación es: y = {coef[0]:.3f}x + {intercept:.3f}")
+```
+
+**Visualizamos los resultados comparando el conjunto de entrenamiento y validación.**
+```{python}
+fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
+
+#Gráfico de entrenamiento
+ax[0].plot(
+    X_train,
+    regressor.predict(X_train),
+    linewidth=3,
+    color="#17A77E",
+    label="Modelo",
+)
+
+ax[0].scatter(X_train, y_train, label="Entrenamiento", color = "#9D50A6", alpha = .6)
+ax[0].set(xlabel="ln_BO5", ylabel="ln_turbidez", title="Conjunto de entrenamiento")
+ax[0].legend()
+
+#Gráfico de validación
+ax[1].plot(X_test, y_pred, linewidth=3, color="#17A77E", label="Modelo")
+ax[1].scatter(X_test, y_test, label="Validación", color = "#9D50A6", alpha = .6)
+ax[1].set(xlabel="ln_BO5", ylabel="ln_turbidez", title="Conjunto de validación")
+ax[1].legend()
+
+# Ecuación de la recta
+coef = regressor.coef_[0]
+intercept = regressor.intercept_
+equation = f"y = {coef:.2f}x + {intercept:.2f}"
+# Mostrar la ecuación en ambos subgráficos (opcionalmente, puedes usar solo uno)
+for a in ax:
+    a.text(0.05, 0.95, equation, transform=a.transAxes,
+           fontsize=10, verticalalignment='top',
+           bbox=dict(boxstyle="round", facecolor="white", alpha=0.7))
+
+fig.suptitle("Regresión lineal")
+
+plt.show()
+```
+
 
 
 ## Métodos de aprendizaje automático 
