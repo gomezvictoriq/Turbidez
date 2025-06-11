@@ -810,8 +810,8 @@ for i in range(len(variables_a_agregar) + 1):
     resultados.append({
         "variables": ", ".join(variables_usadas),
         "num_variables": len(variables_usadas),
-        "R2": r2,
-        "R2-adj": r2_ajustado,
+        "R²": r2,
+        "R²-ajustado": r2_ajustado,
         "RMSE": rmse,
         "AIC": aic
     })
@@ -898,8 +898,8 @@ for i in range(len(variables_a_agregar) + 1):
     resultados.append({
         "variables": ", ".join(variables_usadas),
         "num_variables": len(variables_usadas),
-        "R2": r2,
-        "R2-adj": r2_ajustado,
+        "R²": r2,
+        "R²-ajustado": r2_ajustado,
         "RMSE": rmse,
         "AIC": aic
     })

@@ -2591,13 +2591,13 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p>-base_de_datos_lab.csv → contiene resultados de laboratorio</p>
 <p>-base_de_datos_gis.csv → contiene datos espectrales</p>
 <p><strong>Importamos la librería <em>pandas</em> para usarla, la nombramos como “pd” para simplificar</strong></p>
-<div id="74893bc7" class="cell" data-execution_count="1">
+<div id="5d5c0839" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>Leemos los archivos .csv por separado y definimos dos DataFrame</strong></p>
 <p>Un DataFrame es basicamente una tabla, donde la información se organiza en filas y columnas. Los datos de la misma columna contienen el mismo tipo de datos, pandas agrega por defecto un “índice” que nos ayuda a identificar una fila en particular.</p>
 <p>Con la función <em>pd.read_csv</em> le idicamos a pandas que queremos leer archivos .csv.</p>
-<div id="068fb846" class="cell" data-execution_count="2">
+<div id="c4cd5717" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df1_lab <span class="op">=</span> pd.read_csv(<span class="vs">r&quot;D:</span><span class="dv">\G</span><span class="vs">IT</span><span class="er">\</span><span class="vs">Turbidez</span><span class="dv">\d</span><span class="vs">atos</span><span class="dv">\b</span><span class="vs">ase_de_datos_lab</span><span class="dv">.</span><span class="vs">csv&quot;</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df2_gis <span class="op">=</span> pd.read_csv(<span class="vs">r&quot;D:</span><span class="dv">\G</span><span class="vs">IT</span><span class="er">\</span><span class="vs">Turbidez</span><span class="dv">\d</span><span class="vs">atos</span><span class="dv">\b</span><span class="vs">ase_de_datos_gis</span><span class="dv">.</span><span class="vs">csv&quot;</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -2606,7 +2606,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p><strong>Nota:</strong> Se debió colocar la “r” delante de la dirección para que lea los archivos.</p>
 <p>Video de YouTube <a href="https://www.youtube.com/watch?v=LnH_STJ2GXo">¿Qué es un DataFrame?</a></p>
 <p>Verificamos que los datos se han leído y se crearon correctamente ambos DataFrame por separado, con <em>print</em></p>
-<div id="6c6b8fce" class="cell" data-execution_count="3">
+<div id="cefc72f6" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df1_lab.head())</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df2_gis)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -2638,7 +2638,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p>El valor de reflectancia de un único píxel (1x1) puede estar afectado por el de los píxeles adyacentes. Para considerar este efecto, se reliazó una grila de 3x3 aldedor del pixel central. Luego se calcula el promedio de la reflectancia de todos los píxeles (incluído el central). Tomamos este valor promedio para nuestro estudio, por lo que se conservan unicamente las filas donde pixel=3x3,</p>
 <p><strong>IMPORTANTE</strong>: Esta etapa es necesaria realizarla, porque hay valores de reflectancia tanto para píxles de 1x1 y de 3x3, y a la hora de operar con la tabla la librería <em>pandas</em> tomará ambos valores y realizará cálculos erroneos.</p>
 <p>Para esto, realizamos un filtrado y creamos un nuevo DataFrame <strong>“df_gis3x3”</strong>, el cual se obtiene al hacer un filtrado en el DataFrame original.</p>
-<div id="e8ea6293" class="cell" data-execution_count="4">
+<div id="c265efe4" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>df_gis3x3 <span class="op">=</span> df2_gis[(df2_gis[<span class="st">&#39;pixel&#39;</span>] <span class="op">==</span> <span class="st">&#39;3x3&#39;</span>)]</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_gis3x3.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -2653,13 +2653,13 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p><strong>Nota:</strong> se conserva el índice del original</p>
 <p><strong>Combinamos ambos DataFrame para tener los datos en una única base de datos.</strong></p>
 <p>Lo defimos como <strong>df_combinado</strong>, para esto utilizamos la función <em>pd.merge</em> para realizar la combinación.</p>
-<div id="e3473796" class="cell" data-execution_count="5">
+<div id="7162064e" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>df_combinado <span class="op">=</span> pd.merge(df1_lab, df_gis3x3, on<span class="op">=</span>[<span class="st">&#39;latitud&#39;</span>, <span class="st">&#39;longitud&#39;</span>,<span class="st">&#39;fecha&#39;</span>], how<span class="op">=</span><span class="st">&#39;inner&#39;</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>on=[‘latitud’, ‘longitud’,‘fecha’]</strong> Especifica las columnas por las cuales se unirán los dos DataFrames. En este caso, por coincidencias exactas en latitud, longitud y fecha.</p>
 <p><strong>how=‘inner’</strong> Es el tipo de unión, significa que solo se conservarán las filas que tengan coincidencias en ambos DataFrames en las columnas mencionadas.</p>
 <p>Verificamos que la combinacion se haya realizado correctamente</p>
-<div id="2fc6674b" class="cell" data-execution_count="6">
+<div id="7b57a2b4" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_combinado.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        fecha   longitud    latitud param  valor  punto pixel banda   reflect
@@ -2673,11 +2673,11 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p><strong>Filtramos la turbidez del DataFrame</strong></p>
 <p>Del DataFrame combinado, solo nos interesa las filas que contengan los valores de turbidez, ya que es la propiedad de estudio en este sitio web. Por ello nos quedamos con las filas en donde la columna <em>param</em> sea igual a <em>turb</em>.</p>
 <p>Creamos un nuevo DataFrame a partir de <em>df_combinado</em>.</p>
-<div id="0e3b065a" class="cell" data-execution_count="7">
+<div id="45da6bd8" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>df_turbidez <span class="op">=</span> df_combinado[(df_combinado[<span class="st">&#39;param&#39;</span>] <span class="op">==</span> <span class="st">&#39;turb&#39;</span>)]</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Verificamos</p>
-<div id="f34c7c68" class="cell" data-execution_count="8">
+<div id="f2b51ec3" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_turbidez.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>         fecha   longitud    latitud param  valor  punto pixel banda   reflect
@@ -2691,7 +2691,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p><strong>Nota:</strong> Se han eliminado las filas de ph, cond, sol_sus, etc. Se conserva el índice del DataFrame original.</p>
 <p><strong>Eliminamos las columnas que no nos interesan</strong></p>
 <p>Creamos un nuevo DataFrame a partir de <em>df_turbidez</em>. Con la función <strong>.drop</strong> especificamos que columnas queremos eliminar.</p>
-<div id="4ee62541" class="cell" data-execution_count="9">
+<div id="32e2a37d" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>df_turbidez_banda <span class="op">=</span> df_turbidez.drop(columns<span class="op">=</span>[<span class="st">&#39;longitud&#39;</span>,<span class="st">&#39;latitud&#39;</span>,<span class="st">&#39;punto&#39;</span>,<span class="st">&#39;pixel&#39;</span>,<span class="st">&#39;fecha&#39;</span>,<span class="st">&#39;param&#39;</span>])</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_turbidez_banda.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2706,7 +2706,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 </div>
 <p><strong>Nota:</strong> Solo nos quedamos con las columnas valor,banda y reflect.</p>
 <p><strong>Cambiamos el nombre de la columna “valor” por el de “turbidez”</strong> Como los valores de esa columna son de turbidez, directamente cambiamos el nombre de la columna con la función <strong>.rename</strong></p>
-<div id="01253c0d" class="cell" data-execution_count="10">
+<div id="83905975" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df_turbidez_banda.rename(columns<span class="op">=</span>{<span class="st">&#39;valor&#39;</span>: <span class="st">&#39;turbidez&#39;</span>}, inplace<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_turbidez_banda.head())</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2721,7 +2721,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 </div>
 <p><strong>Creamos la tabla final</strong></p>
 <p>Usamos la función <strong>.pivot_table</strong> para que las columnas sean la turbidez y las distintas bandas de Sentinel-2 (B01, B02 , B03…)</p>
-<div id="7901a27e" class="cell" data-execution_count="11">
+<div id="2c9db69f" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df_turbidez_banda.pivot_table(</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="st">&#39;turbidez&#39;</span>,</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="st">&#39;banda&#39;</span>,</span>
@@ -2734,14 +2734,14 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p>values=‘reflect’ → El contenido de la tabla será lo que haya en la columna ‘reflect’</p>
 <p><strong>Creamos archivo final con los valores de turbidez y reflectancia de cada banda</strong></p>
 <p><strong><em>-Forma 1</em></strong> Creamos un .csv con los datos que nos interesan con la función <strong>.to_csv</strong></p>
-<div id="aaaef7d6" class="cell" data-execution_count="12">
+<div id="9eb5108b" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a> df_final.to_csv(<span class="st">&#39;Turbidez_FINAL.csv&#39;</span>, index<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>IMPORTANTE:</strong> <strong>index=True</strong> , debe ser así para que el índice que definimos al pivotar sea una columna visible en el archivo csv.</p>
 <p>Recordemos que la columna <strong>index</strong> es solo visible solo por la librería <em>pandas</em>, Si guardamos con <strong>index=False</strong>, se omite y no se guarda en el csv.</p>
 <p><strong><em>-Forma 2</em></strong> Si decidimos poner <strong>index=False</strong> tenemos que usar una función adicional antes de exportar, debido a que la turbidez está en el índice, no como una columna.</p>
 <p>Por lo tanto, luego de hacer el pivot se debe agregar una línea de código.</p>
-<div id="a711cdff" class="cell" data-execution_count="13">
+<div id="edd87eb2" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df_turbidez_banda.pivot_table(</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="st">&#39;turbidez&#39;</span>,</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="st">&#39;banda&#39;</span>,</span>
@@ -2752,11 +2752,11 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 </div>
 <p><strong>reset_index()</strong> convierte el índice definido previamente como “turbidez” en una columna normal y reemplaza el índice por uno numérico estándar (0, 1, 2…). que es el predeterminado por pandas.</p>
 <p>Finalmente exportamos como archivo csv.</p>
-<div id="fb9a67fa" class="cell" data-execution_count="14">
+<div id="7c161d37" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>df_final.to_csv(<span class="st">&#39;Turbidez_FINAL2.csv&#39;</span>, index<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>Verificación tabla final</strong></p>
-<div id="8610db0a" class="cell" data-execution_count="15">
+<div id="39dbfea6" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="vs">r&#39;D:</span><span class="dv">\G</span><span class="vs">IT</span><span class="er">\</span><span class="vs">Turbidez</span><span class="er">\</span><span class="vs">Turbidez_FINAL</span><span class="dv">.</span><span class="vs">csv&#39;</span>)</span>
@@ -2786,7 +2786,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p>1- Leer el archivo .csv creado previamente , que contiene los datos de turbidez y los valores de reflectancia para cada banda.</p>
 <p>2- Para usar el método de mínimos cuadrados</p>
 <p><strong>Importamos las funciones</strong></p>
-<div id="7e173a71" class="cell" data-execution_count="16">
+<div id="8fc9b3c6" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LinearRegression</span>
@@ -2800,7 +2800,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p><em>matplotlib.pyplot</em> → para realizar gráficos</p>
 <p><strong>Leemos los datos de interés y los dividimos en entrenamiento y validación.</strong></p>
 <p>Lectura de datos, lo hacemos con <em>pd.read_csv</em></p>
-<div id="898e7ae6" class="cell" data-execution_count="17">
+<div id="d9c984aa" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="vs">r&quot;D:</span><span class="dv">\G</span><span class="vs">IT</span><span class="er">\</span><span class="vs">Turbidez</span><span class="er">\</span><span class="vs">Turbidez_FINAL</span><span class="dv">.</span><span class="vs">csv&quot;</span>)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> df[[<span class="st">&#39;B05&#39;</span>]]  </span>
@@ -2811,7 +2811,7 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p><strong>X</strong> para que sea los valores de reflectancia de una banda en particular;</p>
 <p><strong>y</strong> para que sea la turbidez.</p>
 <p><strong>Dividimos en datos para el entrenamiento y validación</strong></p>
-<div id="ee4c8629" class="cell" data-execution_count="18">
+<div id="e603b319" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>X_train, X_test, y_train, y_test <span class="op">=</span> train_test_split(</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  X, y, test_size<span class="op">=</span><span class="fl">0.25</span>, shuffle<span class="op">=</span><span class="va">True</span>, random_state<span class="op">=</span><span class="dv">42</span> </span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2819,18 +2819,18 @@ Tabla 2: Características principales de algoritmos de aprendizaje automático 
 <p>Conjunto de datos para el entrenamiento <strong>X_train</strong> y <strong>X_test</strong></p>
 <p>Conjunto de datos para la validación <strong>y_train</strong> y <strong>y_test</strong></p>
 <p><strong>Creamos el modelo de regresión</strong></p>
-<div id="cab0d477" class="cell" data-execution_count="19">
+<div id="a3b7a68a" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>regressor <span class="op">=</span> LinearRegression().fit(X_train, y_train)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>LinearRegression()</strong> Crea el modelo de regresión lineal llamado “<em>regressor</em>”. Este modelo, se entrena con la función <strong>.fit</strong> a partir de los datos de entrenamiento (X_train, y_train)</p>
 <p><strong>Evaluamos el modelo generado a partir de las métricas de desempeño.</strong></p>
-<div id="a441ccf3" class="cell" data-execution_count="20">
+<div id="3d14e9f8" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>y_pred <span class="op">=</span> regressor.predict(X_test)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>p_rmse <span class="op">=</span> mean_squared_error(y_test, y_pred)</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>p_r2 <span class="op">=</span> r2_score(y_test, y_pred)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Con la función <strong>print</strong> visualizamos los valores de las métricas de desempeño</p>
-<div id="2975f5e4" class="cell" data-execution_count="21">
+<div id="77dcf181" class="cell" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;RMSE&quot;</span>, p_rmse) </span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;R2&quot;</span>, p_r2)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -2839,7 +2839,7 @@ R2 0.8136238354294016</code></pre>
 </div>
 </div>
 <p>Para ver la ecuación del modelo de regresión</p>
-<div id="4f9081c1" class="cell" data-execution_count="22">
+<div id="12b3eef8" class="cell" data-execution_count="22">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Coeficientes (pendientes)</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>coef <span class="op">=</span> regressor.coef_</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2852,7 +2852,7 @@ R2 0.8136238354294016</code></pre>
 </div>
 </div>
 <p><strong>Visualizamos los resultados comparando el conjunto de entrenamiento y validación.</strong></p>
-<div id="11908b59" class="cell" data-execution_count="23">
+<div id="33ac56f8" class="cell" data-execution_count="23">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>), sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
@@ -2905,7 +2905,7 @@ R2 0.8136238354294016</code></pre>
 <h2 data-number="4.1" class="anchored" data-anchor-id="prueba-de-correlación-c1-turbidez-vs-bandas"><span class="header-section-number">4.1</span> Prueba de correlación C1: turbidez vs bandas</h2>
 <p>Para ser mas rigurosos, agregamos mas etapas durante el entrenamiento de nuestro modelo lineal.</p>
 <p><strong>Importamos <em>pandas</em> para leer los datos</strong></p>
-<div id="c2d598a3" class="cell" data-execution_count="24">
+<div id="49101130" class="cell" data-execution_count="24">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -2919,7 +2919,7 @@ R2 0.8136238354294016</code></pre>
 <p>• +1 correlación lineal perfecta positiva.</p>
 <p>• 0 sin correlación.</p>
 <p>• -1 correlación lineal perfecta negativa.</p>
-<div id="9a9f800c" class="cell" data-execution_count="25">
+<div id="2919123a" class="cell" data-execution_count="25">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>bandas <span class="op">=</span> [col <span class="cf">for</span> col <span class="kw">in</span> Datos.columns <span class="cf">if</span> col.startswith(<span class="st">&#39;B&#39;</span>)]</span>
@@ -3018,7 +3018,7 @@ R2 0.8136238354294016</code></pre>
 </div>
 <p>Observamos que el mejor valor se obtiene con <strong>turb vs B05 = 0.8719</strong></p>
 <p><strong>Gráfica</strong></p>
-<div id="58b155f9" class="cell" data-execution_count="26">
+<div id="53d9e554" class="cell" data-execution_count="26">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -3053,7 +3053,7 @@ R2 0.8136238354294016</code></pre>
 <h2 data-number="4.2" class="anchored" data-anchor-id="prueba-de-correlación-c2-lnturbidez-vs-bandas"><span class="header-section-number">4.2</span> Prueba de correlación C2: ln(turbidez) vs bandas</h2>
 <p><strong>Importamos <em>nunpy</em> para operar con funciones matemáticas</strong></p>
 <p>Creamos un nuevo DataFrame para aplicarle el logaritmo a la colomna turbidez</p>
-<div id="08056718" class="cell" data-execution_count="27">
+<div id="8529edf3" class="cell" data-execution_count="27">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -3068,7 +3068,7 @@ R2 0.8136238354294016</code></pre>
 </details>
 </div>
 <p>Calculamos <em>r</em> entre el ln_turb y cada banda, con la función <strong>.corr</strong> de pandas.</p>
-<div id="ce4f5798" class="cell" data-execution_count="28">
+<div id="a2e6771d" class="cell" data-execution_count="28">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>bandas <span class="op">=</span> [col <span class="cf">for</span> col <span class="kw">in</span> Datos_turb_log.columns <span class="cf">if</span> col.startswith(<span class="st">&#39;B&#39;</span>)]</span>
@@ -3167,7 +3167,7 @@ R2 0.8136238354294016</code></pre>
 </div>
 <p>Observamos que el mejor valor se obtiene con <strong>ln_turb vs B05 = 0.7267</strong></p>
 <p><strong>Gráfica</strong></p>
-<div id="249af51d" class="cell" data-execution_count="29">
+<div id="d1cc2327" class="cell" data-execution_count="29">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -3202,7 +3202,7 @@ R2 0.8136238354294016</code></pre>
 <h2 data-number="4.3" class="anchored" data-anchor-id="prueba-de-correlación-c3-turbidez-vs-lnbandas"><span class="header-section-number">4.3</span> Prueba de correlación C3: turbidez vs ln(bandas)</h2>
 <p><strong>Importamos <em>nunpy</em> para operar con funciones matemáticas</strong></p>
 <p>Creaamos un nuevo DataFrame para aplicarle el logaritmo a todas las columnas</p>
-<div id="19647b01" class="cell" data-execution_count="30">
+<div id="0ce9dd2b" class="cell" data-execution_count="30">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -3226,7 +3226,7 @@ R2 0.8136238354294016</code></pre>
 </details>
 </div>
 <p>Calculamos <em>r</em> entre el ln_turb y ln de cada banda, con la función <strong>.corr</strong> de pandas.</p>
-<div id="89085f33" class="cell" data-execution_count="31">
+<div id="bf2deb43" class="cell" data-execution_count="31">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>bandas_ln <span class="op">=</span> [col <span class="cf">for</span> col <span class="kw">in</span> Banda_log.columns <span class="cf">if</span> col.startswith(<span class="st">&#39;ln_B&#39;</span>)]</span>
@@ -3326,7 +3326,7 @@ R2 0.8136238354294016</code></pre>
 </div>
 <p>Observamos que el mejor valor se obtiene con <strong>turb vs ln_B05 0.8320</strong></p>
 <p><strong>Gráfica</strong></p>
-<div id="fdb8c057" class="cell" data-execution_count="32">
+<div id="3edae743" class="cell" data-execution_count="32">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -3361,7 +3361,7 @@ R2 0.8136238354294016</code></pre>
 <h2 data-number="4.4" class="anchored" data-anchor-id="prueba-de-correlación-c4-lnturbidez-vs-lnbandas"><span class="header-section-number">4.4</span> Prueba de correlación C4: ln(turbidez) vs ln(bandas)</h2>
 <p><strong>Importamos <em>nunpy</em> para operar con funciones matemáticas</strong></p>
 <p>Creaamos un nuevo DataFrame para aplicarle el logaritmo a todas las columnas</p>
-<div id="7d063a72" class="cell" data-execution_count="33">
+<div id="22eac575" class="cell" data-execution_count="33">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -3374,7 +3374,7 @@ R2 0.8136238354294016</code></pre>
 </details>
 </div>
 <p>Calculamos <em>r</em> entre el ln_turb y ln de cada banda, con la función <strong>.corr</strong> de pandas.</p>
-<div id="0540fe38" class="cell" data-execution_count="34">
+<div id="83735047" class="cell" data-execution_count="34">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>bandas_ln <span class="op">=</span> [col <span class="cf">for</span> col <span class="kw">in</span> Datos_log.columns <span class="cf">if</span> col.startswith(<span class="st">&#39;ln_B&#39;</span>)]</span>
@@ -3473,7 +3473,7 @@ R2 0.8136238354294016</code></pre>
 </div>
 <p>Observamos que el mejor valor se obtiene con <strong>ln_turb vs ln_B05 0.7716</strong></p>
 <p><strong>Gráfica</strong></p>
-<div id="a505d764" class="cell" data-execution_count="35">
+<div id="1e10924a" class="cell" data-execution_count="35">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -3508,7 +3508,7 @@ R2 0.8136238354294016</code></pre>
 <section id="seleción-de-variables" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Seleción de variables</h1>
 <p>Se resume en una tabla las pruebas de correlación realizadas.</p>
-<div id="acfd906d" class="cell" data-execution_count="36">
+<div id="add06f64" class="cell" data-execution_count="36">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd </span>
@@ -3675,7 +3675,7 @@ R2 0.8136238354294016</code></pre>
 <p>Se utilizará <em>AIC</em> <span class="citation" data-cites="Chatterjee2015"><a href="#ref-Chatterjee2015" role="doc-biblioref">[11]</a></span>, como criterio para la selección de variables.</p>
 <section id="combinación-1-turbbandas" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="combinación-1-turbbandas"><span class="header-section-number">5.1</span> Combinación 1: turb(bandas)</h2>
-<div id="f9707a90" class="cell" data-execution_count="37">
+<div id="5c9c70ae" class="cell" data-execution_count="37">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
@@ -3736,8 +3736,8 @@ R2 0.8136238354294016</code></pre>
 <span id="cb46-56"><a href="#cb46-56" aria-hidden="true" tabindex="-1"></a>    resultados.append({</span>
 <span id="cb46-57"><a href="#cb46-57" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;variables&quot;</span>: <span class="st">&quot;, &quot;</span>.join(variables_usadas),</span>
 <span id="cb46-58"><a href="#cb46-58" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;num_variables&quot;</span>: <span class="bu">len</span>(variables_usadas),</span>
-<span id="cb46-59"><a href="#cb46-59" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;R2&quot;</span>: r2,</span>
-<span id="cb46-60"><a href="#cb46-60" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;R2-adj&quot;</span>: r2_ajustado,</span>
+<span id="cb46-59"><a href="#cb46-59" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;R²&quot;</span>: r2,</span>
+<span id="cb46-60"><a href="#cb46-60" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;R²-ajustado&quot;</span>: r2_ajustado,</span>
 <span id="cb46-61"><a href="#cb46-61" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;RMSE&quot;</span>: rmse,</span>
 <span id="cb46-62"><a href="#cb46-62" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;AIC&quot;</span>: aic</span>
 <span id="cb46-63"><a href="#cb46-63" aria-hidden="true" tabindex="-1"></a>    })</span>
@@ -3755,8 +3755,8 @@ R2 0.8136238354294016</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">variables</th>
 <th data-quarto-table-cell-role="th">num_variables</th>
-<th data-quarto-table-cell-role="th">R2</th>
-<th data-quarto-table-cell-role="th">R2-adj</th>
+<th data-quarto-table-cell-role="th">R²</th>
+<th data-quarto-table-cell-role="th">R²-ajustado</th>
 <th data-quarto-table-cell-role="th">RMSE</th>
 <th data-quarto-table-cell-role="th">AIC</th>
 </tr>
@@ -3868,7 +3868,7 @@ R2 0.8136238354294016</code></pre>
 </div>
 </div>
 <p><strong>Gráfico de AIC</strong></p>
-<div id="f390f574" class="cell" data-execution_count="38">
+<div id="2e2f0344" class="cell" data-execution_count="38">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>aic_scores <span class="op">=</span> [r[<span class="st">&quot;AIC&quot;</span>] <span class="cf">for</span> r <span class="kw">in</span> resultados]</span>
@@ -3892,7 +3892,7 @@ R2 0.8136238354294016</code></pre>
 </section>
 <section id="combinación-2-turbln_bandas." class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="combinación-2-turbln_bandas."><span class="header-section-number">5.2</span> Combinación 2: turb(ln_bandas).</h2>
-<div id="5f9a58dd" class="cell" data-execution_count="39">
+<div id="4e00cd7d" class="cell" data-execution_count="39">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
@@ -3955,8 +3955,8 @@ R2 0.8136238354294016</code></pre>
 <span id="cb48-58"><a href="#cb48-58" aria-hidden="true" tabindex="-1"></a>    resultados.append({</span>
 <span id="cb48-59"><a href="#cb48-59" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;variables&quot;</span>: <span class="st">&quot;, &quot;</span>.join(variables_usadas),</span>
 <span id="cb48-60"><a href="#cb48-60" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;num_variables&quot;</span>: <span class="bu">len</span>(variables_usadas),</span>
-<span id="cb48-61"><a href="#cb48-61" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;R2&quot;</span>: r2,</span>
-<span id="cb48-62"><a href="#cb48-62" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;R2-adj&quot;</span>: r2_ajustado,</span>
+<span id="cb48-61"><a href="#cb48-61" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;R²&quot;</span>: r2,</span>
+<span id="cb48-62"><a href="#cb48-62" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;R²-ajustado&quot;</span>: r2_ajustado,</span>
 <span id="cb48-63"><a href="#cb48-63" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;RMSE&quot;</span>: rmse,</span>
 <span id="cb48-64"><a href="#cb48-64" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;AIC&quot;</span>: aic</span>
 <span id="cb48-65"><a href="#cb48-65" aria-hidden="true" tabindex="-1"></a>    })</span>
@@ -3974,8 +3974,8 @@ R2 0.8136238354294016</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">variables</th>
 <th data-quarto-table-cell-role="th">num_variables</th>
-<th data-quarto-table-cell-role="th">R2</th>
-<th data-quarto-table-cell-role="th">R2-adj</th>
+<th data-quarto-table-cell-role="th">R²</th>
+<th data-quarto-table-cell-role="th">R²-ajustado</th>
 <th data-quarto-table-cell-role="th">RMSE</th>
 <th data-quarto-table-cell-role="th">AIC</th>
 </tr>
@@ -4087,7 +4087,7 @@ R2 0.8136238354294016</code></pre>
 </div>
 </div>
 <p><strong>Gráfico de AIC</strong></p>
-<div id="28476a8c" class="cell" data-execution_count="40">
+<div id="af5e0fb5" class="cell" data-execution_count="40">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>aic_scores <span class="op">=</span> [r[<span class="st">&quot;AIC&quot;</span>] <span class="cf">for</span> r <span class="kw">in</span> resultados]</span>
@@ -4114,7 +4114,7 @@ R2 0.8136238354294016</code></pre>
 <h1 data-number="6"><span class="header-section-number">6</span> Modelos combinacion 1: turb(bandas)</h1>
 <section id="modelo-con-b05" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="modelo-con-b05"><span class="header-section-number">6.1</span> Modelo con B05</h2>
-<div id="ac3de01e" class="cell" data-execution_count="41">
+<div id="15864f9f" class="cell" data-execution_count="41">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -4197,7 +4197,7 @@ B05: 1101.3676</code></pre>
 </section>
 <section id="modelo-con-6-bandas" class="level2" data-number="6.2">
 <h2 data-number="6.2" class="anchored" data-anchor-id="modelo-con-6-bandas"><span class="header-section-number">6.2</span> Modelo con 6 bandas</h2>
-<div id="00c9ba64" class="cell" data-execution_count="42">
+<div id="719f09b6" class="cell" data-execution_count="42">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -4286,7 +4286,7 @@ B8A: -4629.5932</code></pre>
 <h1 data-number="7"><span class="header-section-number">7</span> Modelos combinacion 2: turb(ln_bandas)</h1>
 <section id="modelo-con-lnb05" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="modelo-con-lnb05"><span class="header-section-number">7.1</span> Modelo con ln(B05)</h2>
-<div id="bd51e2bb" class="cell" data-execution_count="43">
+<div id="e96235e7" class="cell" data-execution_count="43">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -4367,7 +4367,7 @@ ln_B05: 273.8022</code></pre>
 </section>
 <section id="modelo-con-5-bandas" class="level2" data-number="7.2">
 <h2 data-number="7.2" class="anchored" data-anchor-id="modelo-con-5-bandas"><span class="header-section-number">7.2</span> Modelo con 5 bandas</h2>
-<div id="16994fca" class="cell" data-execution_count="44">
+<div id="76891430" class="cell" data-execution_count="44">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -4453,7 +4453,7 @@ ln_B04: -718.9488</code></pre>
 # Métodos de aprendizaje automático 
 Proximamente...
 
-::: {#059d5f6b .cell execution_count=45}
+::: {#bd098688 .cell execution_count=45}
 ``` {.python .cell-code}
 import numpy as np
 from sklearn.datasets import load_diabetes
