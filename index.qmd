@@ -792,19 +792,26 @@ for i in range(len(variables_a_agregar) + 1):
     r2 = r2_score(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
-     # Cálculo de AIC
+    # Cálculo R2-ajustado
+
+    i = len(y)
+    j = X.shape[1]
+    r2_ajustado = 1 - (1 - r2) * (i - 1) / (i - j - 1)
+
+    # Cálculo de AIC
     n = len(y_test)
     residuals = y_test - y_pred
     rss = np.sum(residuals ** 2)
     k = X_test.shape[1] + 1  # +1 por el intercepto
     aic = n * np.log(rss / n) + 2 * k
-  
 
-    # Guardamos los resultados como dict
+
+    # Guardamos los resultados
     resultados.append({
         "variables": ", ".join(variables_usadas),
         "num_variables": len(variables_usadas),
         "R2": r2,
+        "R2-adj": r2_ajustado,
         "RMSE": rmse,
         "AIC": aic
     })
@@ -815,6 +822,7 @@ df_resultados
 ```
 
 **Gráfico de AIC**
+
 ```{python}
 #| code-fold: true
 aic_scores = [r["AIC"] for r in resultados]
@@ -835,6 +843,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
 
 Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv")
 
@@ -870,6 +880,12 @@ for i in range(len(variables_a_agregar) + 1):
     r2 = r2_score(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
+    # Cálculo R2-ajustado
+
+    i = len(y)
+    j = X.shape[1]
+    r2_ajustado = 1 - (1 - r2) * (i - 1) / (i - j - 1)
+
     # Cálculo de AIC
     n = len(y_test)
     residuals = y_test - y_pred
@@ -883,6 +899,7 @@ for i in range(len(variables_a_agregar) + 1):
         "variables": ", ".join(variables_usadas),
         "num_variables": len(variables_usadas),
         "R2": r2,
+        "R2-adj": r2_ajustado,
         "RMSE": rmse,
         "AIC": aic
     })
@@ -904,123 +921,11 @@ plt.grid(True)
 plt.show()
 ```
 
-# Entrenamos el modelo lineal con el método de mínimos cudrados
+# Modelos combinacion 1: turb(bandas)
+## Modelo con B05
 
-**Importamos las funciones**
-```{python}
-
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.pyplot as plt
-```
-
-**Dividimos los datos en entrenamiento y validación.**
-
-```{python}
-X = Datos_log[['ln_B05']]  
-y = Datos_log['ln_turbidez']  
-```
-
-Definimos: 
-
-**df**, un DataFrame que contiene los datos de turbidez y reflectancia;
-
-**X** para que sea los valores de reflectancia de una banda en particular;
-
-**y** para que sea la turbidez.
-
-**Dividimos en datos para el entrenamiento y validación**
-```{python}
-X_train, X_test, y_train, y_test = train_test_split(
-  X, y, test_size=0.25, shuffle=True, random_state=42)
-
-#test_size=0.25 significa que usamos el 25% de los datos para el testeo y el %75 restante para el entrenamiento 
-```
-
-Conjunto de datos para el entrenamiento
-**X_train** y **X_test**
-
-Conjunto de datos para la validación
-**y_train** y **y_test**
-
-**Creamos el modelo de regresión**
-
-```{python}
-regressor = LinearRegression().fit(X_train, y_train)
-```
-
-**LinearRegression()** Crea el modelo de regresión lineal llamado "*regressor*". Este modelo, se entrena con la función **.fit** a partir de los datos de entrenamiento (X_train, y_train)
-
-
-**Evaluamos el modelo generado a partir de las métricas de desempeño.**
-
-```{python}
-y_pred = regressor.predict(X_test)
-p_rmse = mean_squared_error(y_test, y_pred)
-p_r2 = r2_score(y_test, y_pred)
-```
-Con la función **print** visualizamos los valores de las métricas de desempeño
-```{python}
-print("RMSE", p_rmse) 
-print("R2", p_r2)
-```
-
-Para ver la ecuación del modelo de regresión
-
-```{python}
-# Coeficientes (pendientes)
-coef = regressor.coef_
-
-# Intercepto (ordenada al origen)
-intercept = regressor.intercept_
-
-print(f"La ecuación es: y = {coef[0]:.3f}x + {intercept:.3f}")
-```
-
-**Visualizamos los resultados comparando el conjunto de entrenamiento y validación.**
 ```{python}
 #| code-fold: true
-fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
-
-#Gráfico de entrenamiento
-ax[0].plot(
-    X_train,
-    regressor.predict(X_train),
-    linewidth=3,
-    color="#17A77E",
-    label="Modelo",
-)
-
-ax[0].scatter(X_train, y_train, label="Entrenamiento", color = "#9D50A6", alpha = .6)
-ax[0].set(xlabel="ln_BO5", ylabel="ln_turbidez", title="Conjunto de entrenamiento")
-ax[0].legend()
-
-#Gráfico de validación
-ax[1].plot(X_test, y_pred, linewidth=3, color="#17A77E", label="Modelo")
-ax[1].scatter(X_test, y_test, label="Validación", color = "#9D50A6", alpha = .6)
-ax[1].set(xlabel="ln_BO5", ylabel="ln_turbidez", title="Conjunto de validación")
-ax[1].legend()
-
-# Ecuación de la recta
-coef = regressor.coef_[0]
-intercept = regressor.intercept_
-equation = f"y = {coef:.2f}x + {intercept:.2f}"
-# Mostrar la ecuación en ambos subgráficos (opcionalmente, puedes usar solo uno)
-for a in ax:
-    a.text(0.05, 0.95, equation, transform=a.transAxes,
-           fontsize=10, verticalalignment='top',
-           bbox=dict(boxstyle="round", facecolor="white", alpha=0.7))
-
-fig.suptitle("Regresión lineal")
-
-plt.show()
-```
-
-# Entrenamiento de modelo lineal multivariable
-
-
-```{python}
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -1030,7 +935,74 @@ import matplotlib.pyplot as plt
 
 
 Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_banda.csv")
-X = Datos[['B05', 'B08', 'B07', 'B06', 'B04']]  
+X = Datos[['B05']]  
+y = Datos['turbidez']  
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, shuffle=True, random_state=42
+)
+
+#test_size=0.25 significa que usamos el 25% de los datos para el testeo y el %75 restante para el entrenamiento 
+
+modelo = LinearRegression()
+modelo.fit(X_train, y_train)
+
+# Predicciones
+y_pred = modelo.predict(X_test)
+
+# Métricas
+r2 = r2_score(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+print(f"R²: {r2:.4f}")
+print(f"RMSE: {rmse:.4f}")
+
+#Ver coefidiones del modelo
+print("Intercepto:", modelo.intercept_)
+print("Coeficientes:")
+for nombre, coef in zip(X.columns, modelo.coef_):
+    print(f"{nombre}: {coef:.4f}")
+
+# Predicciones para entrenamiento y test
+y_train_pred = modelo.predict(X_train)
+y_test_pred = modelo.predict(X_test)
+
+plt.figure(figsize=(10, 6))
+
+# Entrenamiento
+plt.scatter(y_train, y_train_pred, color='blue', label='Entrenamiento', alpha=0.6)
+
+# Test
+plt.scatter(y_test, y_test_pred, color='green', label='Test', alpha=0.6)
+
+# Línea ideal (y = x)
+min_val = min(min(y_train), min(y_test))
+max_val = max(max(y_train), max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], 'k--', lw=2, label='Ideal')
+
+plt.xlabel('Turbidez real')
+plt.ylabel('Turbidez predicha')
+plt.title('Regresión Lineal: Valores Reales vs. Predichos')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+```
+
+## Modelo con 6 bandas
+
+```{python}
+#| code-fold: true
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_banda.csv")
+X = Datos[['B05', 'B08', 'B07', 'B06', 'B04', 'B8A']]  
 y = Datos['turbidez']  
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -1083,6 +1055,137 @@ plt.show()
 
 ```
 
+# Modelos combinacion 2: turb(ln_bandas)
+## Modelo con ln(B05)
+
+```{python}
+#| code-fold: true
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv")
+X = Datos[['ln_B05']]  
+y = Datos['turbidez']  
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, shuffle=True, random_state=42
+)
+
+modelo = LinearRegression()
+modelo.fit(X_train, y_train)
+
+# Predicciones
+y_pred = modelo.predict(X_test)
+
+# Métricas
+r2 = r2_score(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+print(f"R²: {r2:.4f}")
+print(f"RMSE: {rmse:.4f}")
+
+#Ver coefidiones del modelo
+print("Intercepto:", modelo.intercept_)
+print("Coeficientes:")
+for nombre, coef in zip(X.columns, modelo.coef_):
+    print(f"{nombre}: {coef:.4f}")
+
+# Predicciones para entrenamiento y test
+y_train_pred = modelo.predict(X_train)
+y_test_pred = modelo.predict(X_test)
+
+plt.figure(figsize=(10, 6))
+
+# Entrenamiento
+plt.scatter(y_train, y_train_pred, color='blue', label='Entrenamiento', alpha=0.6)
+
+# Test
+plt.scatter(y_test, y_test_pred, color='green', label='Test', alpha=0.6)
+
+# Línea ideal (y = x)
+min_val = min(min(y_train), min(y_test))
+max_val = max(max(y_train), max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], 'k--', lw=2, label='Ideal')
+
+plt.xlabel('Turbidez real')
+plt.ylabel('Turbidez predicha')
+plt.title('Regresión Lineal: Valores Reales vs. Predichos')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+```
+
+## Modelo con 5 bandas
+
+```{python}
+#| code-fold: true
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv")
+X = Datos[['ln_B05', 'ln_B08', 'ln_B07', 'ln_B06', 'ln_B04']]  
+y = Datos['turbidez']  
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, shuffle=True, random_state=42
+)
+
+modelo = LinearRegression()
+modelo.fit(X_train, y_train)
+
+# Predicciones
+y_pred = modelo.predict(X_test)
+
+# Métricas
+r2 = r2_score(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+print(f"R²: {r2:.4f}")
+print(f"RMSE: {rmse:.4f}")
+
+#Ver coefidiones del modelo
+print("Intercepto:", modelo.intercept_)
+print("Coeficientes:")
+for nombre, coef in zip(X.columns, modelo.coef_):
+    print(f"{nombre}: {coef:.4f}")
+
+# Predicciones para entrenamiento y test
+y_train_pred = modelo.predict(X_train)
+y_test_pred = modelo.predict(X_test)
+
+plt.figure(figsize=(10, 6))
+
+# Entrenamiento
+plt.scatter(y_train, y_train_pred, color='blue', label='Entrenamiento', alpha=0.6)
+
+# Test
+plt.scatter(y_test, y_test_pred, color='green', label='Test', alpha=0.6)
+
+# Línea ideal (y = x)
+min_val = min(min(y_train), min(y_test))
+max_val = max(max(y_train), max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], 'k--', lw=2, label='Ideal')
+
+plt.xlabel('Turbidez real')
+plt.ylabel('Turbidez predicha')
+plt.title('Regresión Lineal: Valores Reales vs. Predichos')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+```
+```
 
 # Métodos de aprendizaje automático 
 Proximamente...
