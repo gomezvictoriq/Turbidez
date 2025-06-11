@@ -130,13 +130,13 @@ En el proyecto tenemos dos archivos .csv que contienen los datos:
 
 -base_de_datos_gis.csv → contiene datos espectrales
 
-### Importamos la librería *pandas* para usarla, la nombramos como "pd" para simplificar
+**Importamos la librería *pandas* para usarla, la nombramos como "pd" para simplificar**
 
 ```{python}
 import pandas as pd
 ```
 
-### Leemos los archivos .csv por separado y definimos dos DataFrame 
+**Leemos los archivos .csv por separado y definimos dos DataFrame**
 
 Un DataFrame es basicamente una tabla, donde la información se organiza en filas y columnas. Los datos de la misma columna contienen el mismo tipo de datos, pandas agrega por defecto un "índice" que nos ayuda a identificar una fila en particular.
 
@@ -164,7 +164,7 @@ print(df2_gis)
 
 **Nota:** La primer columna (donde se ven los valores 0,1,2,3,4, ...) es el *índice* que agrega pandas por defecto al DataFrame, esa columna no forma parte del csv original.
 
-### Hacemos un filtrado en el DataFrame de datos espectrales
+**Hacemos un filtrado en el DataFrame de datos espectrales**
 
 En la tabla original de los datos espectrales en la columna *pixel* se menciona 1x1 y 3x3. Cada píxel contiene un valor de reflectancia medida por el sensor de Sentinel-2.
 
@@ -181,7 +181,7 @@ print(df_gis3x3.head())
 
 **Nota:** se conserva el índice del original
 
-### Combinamos ambos DataFrame para tener los datos en una única base de datos.
+**Combinamos ambos DataFrame para tener los datos en una única base de datos.**
 
 Lo defimos como **df_combinado**, para esto utilizamos la función *pd.merge* para realizar la combinación.
 
@@ -199,7 +199,7 @@ Verificamos que la combinacion se haya realizado correctamente
 print(df_combinado.head())
 ```
 
-### Filtramos la turbidez del DataFrame
+**Filtramos la turbidez del DataFrame**
 
 Del DataFrame combinado, solo nos interesa las filas que contengan los valores de turbidez, ya que es la propiedad de estudio en este sitio web. Por ello nos quedamos con las filas en donde la columna *param* sea igual a *turb*.
 
@@ -215,7 +215,7 @@ print(df_turbidez.head())
 
 **Nota:** Se han eliminado las filas de ph, cond, sol_sus, etc. Se conserva el índice del DataFrame original.
 
-### Eliminamos las columnas que no nos interesan
+**Eliminamos las columnas que no nos interesan**
 
 Creamos un nuevo DataFrame a partir de *df_turbidez*. Con la función **.drop** especificamos que columnas queremos eliminar.
 
@@ -227,7 +227,7 @@ print(df_turbidez_banda.head())
 
 **Nota:** Solo nos quedamos con las columnas valor,banda y reflect.
 
-### Cambiamos el nombre de la columna "valor" por el de "turbidez"
+**Cambiamos el nombre de la columna "valor" por el de "turbidez"**
 Como los valores de esa columna son de turbidez, directamente cambiamos el nombre de la columna con la función **.rename**
 
 ```{python}
@@ -236,7 +236,7 @@ df_turbidez_banda.rename(columns={'valor': 'turbidez'}, inplace=True)
 print(df_turbidez_banda.head())
 ```
 
-### Creamos la tabla final
+**Creamos la tabla final**
 
 Usamos la función **.pivot_table** para que las columnas sean la turbidez y las distintas bandas de Sentinel-2 (B01, B02 , B03...)
 
@@ -256,9 +256,9 @@ columns='banda'  → Las columnas serán los valores únicos de 'banda' (B01, B0
 
 values='reflect' → El contenido de la tabla será lo que haya en la columna 'reflect'
 
-### Creo archivo final con los valores de turbidez y reflectancia de cada banda
+**Creamos archivo final con los valores de turbidez y reflectancia de cada banda**
 
-#### Forma 1
+***-Forma 1***
 Creamos un .csv con los datos que nos interesan con la función **.to_csv**
 
 ```{python}
@@ -270,7 +270,7 @@ Creamos un .csv con los datos que nos interesan con la función **.to_csv**
 Recordemos que la columna **index** es solo visible solo por la librería *pandas*, 
 Si guardamos con **index=False**, se omite y no se guarda en el csv.
 
-#### Forma 2
+***-Forma 2***
 Si decidimos poner **index=False** tenemos que usar una función adicional antes de exportar, debido a que la turbidez está en el índice, no como una columna.
 
 Por lo tanto, luego de hacer el pivot se debe agregar una línea de código.
@@ -292,7 +292,7 @@ Finalmente exportamos como archivo csv.
 df_final.to_csv('Turbidez_FINAL2.csv', index=False)
 ```
 
-Verificación tabla final
+**Verificación tabla final**
 
 ```{python}
 import pandas as pd
@@ -301,10 +301,12 @@ df = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
 print(df.head())
 ```
 
-# Algoritmos
+# Prueba de modelo lineal
 
-## Regresión lineal con método de mínimos cuadrados
- 
+**Regresión lineal con método de mínimos cuadrados**
+
+Reemplamos el código del tutorial de sklearn por nuestros datos.
+
 Debemos importar las funciones necesarias para:
 
 1- Leer el archivo .csv creado previamente , que contiene los datos de turbidez y los valores de reflectancia para cada banda.
@@ -352,7 +354,7 @@ Definimos:
 **Dividimos en datos para el entrenamiento y validación**
 ```{python}
 X_train, X_test, y_train, y_test = train_test_split(
-  X, y, test_size=0.25, shuffle=True  #hace una mezcla 
+  X, y, test_size=0.25, shuffle=True, random_state=42 
 )
 ```
 
@@ -436,7 +438,8 @@ plt.show()
 ```
 
 
-## Prueba de correlación: turbidez vs bandas
+# Pruebas de correlación
+## Prueba de correlación C1: turbidez vs bandas
 Para ser mas rigurosos, agregamos mas etapas durante el entrenamiento de nuestro modelo lineal.
 
 **Importamos *pandas* para leer los datos**
@@ -475,11 +478,11 @@ df_correlaciones1 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 
 df_correlaciones1 = df_correlaciones1.sort_values(by='r', ascending=False).reset_index(drop=True)
 
 df_correlaciones1['Banda'] = "turb vs " + df_correlaciones1['Banda'].astype(str)
-df_correlaciones1.rename(columns={'Banda': 'Relación'}, inplace=True)
+df_correlaciones1.rename(columns={'Banda': 'Correlación 1'}, inplace=True)
 
-df_correlaciones1.to_csv('correlaciones_turbidez1.csv', index=False)
+df_correlaciones1.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C1_turb_vs_banda.csv', index=False)
 
-print(df_correlaciones1)
+df_correlaciones1
 ```
 
 Observamos que el mejor valor se obtiene con **turb vs B05 = 0.8719**
@@ -507,9 +510,9 @@ plt.figtext(0.5, -0.04, descripcion,
 plt.show()
 ```
 
-## Prueba de correlación: ln turbidez vs bandas
+## Prueba de correlación C2: ln(turbidez) vs bandas
 
-Importamos *nunpy* para operar con funciones matemáticas
+**Importamos *nunpy* para operar con funciones matemáticas**
 
 Creamos un nuevo DataFrame para aplicarle el logaritmo a la colomna turbidez 
 
@@ -545,11 +548,11 @@ df_correlaciones2 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 
 df_correlaciones2 = df_correlaciones2.sort_values(by='r', ascending=False).reset_index(drop=True)
 
 df_correlaciones2['Banda'] = "ln_turb vs " + df_correlaciones2['Banda'].astype(str)
-df_correlaciones2.rename(columns={'Banda': 'Relación'}, inplace=True)
+df_correlaciones2.rename(columns={'Banda': 'Correlación 2'}, inplace=True)
 
-df_correlaciones2.to_csv('correlaciones_turbidez2.csv', index=False)
+df_correlaciones2.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C2_ln_turb_vs_banda.csv', index=False)
 
-print(df_correlaciones2)
+df_correlaciones2
 ```
 Observamos que el mejor valor se obtiene con **ln_turb vs B05 = 0.7267**
 
@@ -576,9 +579,87 @@ plt.figtext(0.5, -0.06, descripcion,
 plt.show()
 ```
 
-## Prueba de correlación: ln turbidez vs ln bandas
+## Prueba de correlación C3: turbidez vs ln(bandas)
 
-Importamos *nunpy* para operar con funciones matemáticas
+**Importamos *nunpy* para operar con funciones matemáticas**
+
+Creaamos un nuevo DataFrame para aplicarle el logaritmo a todas las columnas 
+
+```{python}
+#| code-fold: true
+import numpy as np
+import pandas as pd
+
+Banda_log = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+
+col = [col for col in Banda_log.columns if col.startswith('B')]
+
+Banda_log[col] = np.log(Banda_log[col])
+
+#Cambiamos en nombre las columnas, agremamos ln_ a cada columna
+
+Banda_log.columns = ['ln_' + col for col in Banda_log.columns]
+
+Banda_log.rename(columns={'ln_turbidez': 'turbidez'}, inplace=True)
+
+Banda_log.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv", index=False)
+
+#print(Banda_log.head())
+```
+
+Calculamos *r* entre el ln_turb y ln de cada banda, con la función **.corr** de pandas. 
+
+```{python}
+#| code-fold: true
+bandas_ln = [col for col in Banda_log.columns if col.startswith('ln_B')]
+
+correlaciones = {}
+
+for banda in bandas_ln:
+    r = Banda_log['turbidez'].corr(Banda_log[banda])
+    correlaciones[banda] = r
+
+#Creamos un Data Frame.
+df_correlaciones3 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 'r'])
+#Ordenamos por mayor a menos valor de r.
+df_correlaciones3 = df_correlaciones3.sort_values(by='r', ascending=False).reset_index(drop=True)
+
+df_correlaciones3['Banda'] = "turb vs " + df_correlaciones3['Banda'].astype(str)
+df_correlaciones3.rename(columns={'Banda': 'Correlación 3'}, inplace=True)
+
+
+df_correlaciones3.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C3_turb_vs_ln_banda.csv', index=False)
+
+df_correlaciones3
+```
+Observamos que el mejor valor se obtiene con **turb vs ln_B05  0.8320**
+
+**Gráfica**
+```{python}
+#| code-fold: true
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(5, 5))
+plt.scatter(Banda_log['ln_B05'], Banda_log['turbidez'], color='blue', alpha=0.7)
+plt.xlabel('ln(B05)')
+plt.ylabel('turbidez')
+plt.title('turbidez vs de ln(B05)')
+plt.grid(True)
+
+descripcion = "Figura 3: Este gráfico de dispersión muestra la relación entre ln(B05) y turbidez. Se observa una mejora de la linealidad entre ambas."
+plt.figtext(0.5, -0.04, descripcion,
+            wrap=True,                  # Permite que el texto se ajuste en varias líneas
+            horizontalalignment='center', # Centra el texto horizontalmente
+            fontsize=9,                 # Tamaño de la fuente
+            color='gray'                # Color del texto (comúnmente gris para pies de figura)
+           )
+
+plt.show()
+```
+
+## Prueba de correlación C4: ln(turbidez) vs ln(bandas)
+
+**Importamos *nunpy* para operar con funciones matemáticas**
 
 Creaamos un nuevo DataFrame para aplicarle el logaritmo a todas las columnas 
 
@@ -606,16 +687,16 @@ for banda in bandas_ln:
     correlaciones[banda] = r
 
 #Creamos un Data Frame.
-df_correlaciones3 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 'r'])
+df_correlaciones4 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 'r'])
 #Ordenamos por mayor a menos valor de r.
-df_correlaciones3 = df_correlaciones3.sort_values(by='r', ascending=False).reset_index(drop=True)
+df_correlaciones4 = df_correlaciones4.sort_values(by='r', ascending=False).reset_index(drop=True)
 
-df_correlaciones3['Banda'] = "ln_turb vs " + df_correlaciones3['Banda'].astype(str)
-df_correlaciones3.rename(columns={'Banda': 'Relación'}, inplace=True)
+df_correlaciones4['Banda'] = "ln_turb vs " + df_correlaciones4['Banda'].astype(str)
+df_correlaciones4.rename(columns={'Banda': 'Correlación 4'}, inplace=True)
 
-df_correlaciones3.to_csv('correlaciones_turbidez3.csv', index=False)
+df_correlaciones4.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C4_ln_turb_vs_ln_banda.csv', index=False)
 
-print(df_correlaciones3)
+df_correlaciones4
 ```
 Observamos que el mejor valor se obtiene con **ln_turb vs ln_B05  0.7716**
 
@@ -631,7 +712,7 @@ plt.ylabel('ln(turbidez)')
 plt.title('ln(turbidez) vs de ln(B05)')
 plt.grid(True)
 
-descripcion = "Figura 3: Este gráfico de dispersión muestra la relación entre ln(B05) y ln(turbidez). Se observa una mejora de la linealidad entre ambas."
+descripcion = "Figura 3: Este gráfico de dispersión muestra la relación entre ln(B05) y ln(turbidez)."
 plt.figtext(0.5, -0.04, descripcion,
             wrap=True,                  # Permite que el texto se ajuste en varias líneas
             horizontalalignment='center', # Centra el texto horizontalmente
@@ -642,8 +723,188 @@ plt.figtext(0.5, -0.04, descripcion,
 plt.show()
 ```
 
+# Seleción de variables
+Se resume en una tabla las pruebas de correlación realizadas.
+```{python}
+#| code-fold: true
+import pandas as pd 
 
-## Entrenamos el modelo lineal con el método de mínimos cudrados
+C1 = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Correlaciones\C1_turb_vs_banda.csv")
+C2= pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Correlaciones\C2_ln_turb_vs_banda.csv")
+C3 = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Correlaciones\C3_turb_vs_ln_banda.csv")
+C4 = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Correlaciones\C4_ln_turb_vs_ln_banda.csv")
+
+C_comb = pd.concat([C1, C2 ,C3, C4], axis=1)
+
+C_comb
+```
+
+Se puede observar que en C1 y C3 las correlaciones son mas altas respecto a C2 y C4. Por que que se seguirá el análisis con estas combinaciones:
+
+  • turb (bandas)
+
+  • turb (ln_bandas)
+
+Se probarán modelos con ambas combinaciones por separado y se evalurá su desempeño.
+
+Se utilizará *AIC* @Chatterjee2015, como criterio para la selección de variables.
+
+## Combinación 1: turb(bandas)
+```{python}
+#| code-fold: true
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+import numpy as np
+
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_banda.csv")
+
+# Variable objetivo
+y = Datos['turbidez']
+
+# Variable fija (B05 siempre presente)
+variables_fijas = ['B05']
+
+# Variables que se irán agregando en orden específico (según tabla de correlaciones 1)
+variables_a_agregar = ['B08', 'B07', 'B06', 'B04', 'B8A', 'B03', 'B02', 'B01', 'B12' , 'B11']  # Se puede agregar o cambiar el orden
+
+# Lista para guardar resultados
+resultados = []
+
+# Proceso de entrenamiento incremental
+for i in range(len(variables_a_agregar) + 1):
+    # Usamos solo las variables fijas al principio
+    variables_usadas = variables_fijas + variables_a_agregar[:i]
+
+    # Seleccionamos los datos correspondientes
+    X = Datos[variables_usadas]
+    
+    # División entrenamiento/prueba
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=42)
+    
+    # Entrenar modelo
+    modelo = LinearRegression()
+    modelo.fit(X_train, y_train)
+    
+    # Predicción y evaluación
+    y_pred = modelo.predict(X_test)
+    r2 = r2_score(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+     # Cálculo de AIC
+    n = len(y_test)
+    residuals = y_test - y_pred
+    rss = np.sum(residuals ** 2)
+    k = X_test.shape[1] + 1  # +1 por el intercepto
+    aic = n * np.log(rss / n) + 2 * k
+  
+
+    # Guardamos los resultados como dict
+    resultados.append({
+        "variables": ", ".join(variables_usadas),
+        "num_variables": len(variables_usadas),
+        "R2": r2,
+        "RMSE": rmse,
+        "AIC": aic
+    })
+    
+df_resultados = pd.DataFrame(resultados)
+df_resultados
+
+```
+
+**Gráfico de AIC**
+```{python}
+#| code-fold: true
+aic_scores = [r["AIC"] for r in resultados]
+n_vars = [r["num_variables"] for r in resultados]
+
+plt.plot(n_vars, aic_scores, marker='o', color='purple')
+plt.title('AIC vs Número de Variables')
+plt.xlabel('Número de variables')
+plt.ylabel('AIC')
+plt.grid(True)
+plt.show()
+```
+## Combinación 2: turb(ln_bandas).
+```{python}
+#| code-fold: true
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+import numpy as np
+
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv")
+
+#Variable objetivo
+y = Datos['turbidez']
+
+#Variable fija (B05 siempre presente)
+variables_fijas = ['ln_B05']
+
+#Variables que se irán agregando en orden específico (según tabla de correlaciones 3)
+variables_a_agregar = ['ln_B08', 'ln_B07', 'ln_B06', 'ln_B04', 'ln_B8A', 'ln_B03', 'ln_B02', 'ln_B01', 'ln_B12' , 'ln_B11']
+
+#Lista para guardar resultados
+resultados = []
+
+#Proceso de entrenamiento incremental
+for i in range(len(variables_a_agregar) + 1):
+    # Usamos solo las variables fijas al principio
+    variables_usadas = variables_fijas + variables_a_agregar[:i]
+
+    # Seleccionamos los datos correspondientes
+    X = Datos[variables_usadas]
+    
+    # División entrenamiento/prueba
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=42)
+    
+    # Entrenar modelo
+    modelo = LinearRegression()
+    modelo.fit(X_train, y_train)
+    
+    # Predicción y evaluación
+    y_pred = modelo.predict(X_test)
+    r2 = r2_score(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+    # Cálculo de AIC
+    n = len(y_test)
+    residuals = y_test - y_pred
+    rss = np.sum(residuals ** 2)
+    k = X_test.shape[1] + 1  # +1 por el intercepto
+    aic = n * np.log(rss / n) + 2 * k
+
+
+    # Guardamos los resultados
+    resultados.append({
+        "variables": ", ".join(variables_usadas),
+        "num_variables": len(variables_usadas),
+        "R2": r2,
+        "RMSE": rmse,
+        "AIC": aic
+    })
+    
+df_resultados = pd.DataFrame(resultados)
+df_resultados
+```
+**Gráfico de AIC**
+```{python}
+#| code-fold: true
+aic_scores = [r["AIC"] for r in resultados]
+n_vars = [r["num_variables"] for r in resultados]
+
+plt.plot(n_vars, aic_scores, marker='o', color='purple')
+plt.title('AIC vs Número de Variables')
+plt.xlabel('Número de variables')
+plt.ylabel('AIC')
+plt.grid(True)
+plt.show()
+```
+
+# Entrenamos el modelo lineal con el método de mínimos cudrados
 
 **Importamos las funciones**
 ```{python}
@@ -672,8 +933,7 @@ Definimos:
 **Dividimos en datos para el entrenamiento y validación**
 ```{python}
 X_train, X_test, y_train, y_test = train_test_split(
-  X, y, test_size=0.25, shuffle=True  #hace una mezcla 
-)
+  X, y, test_size=0.25, shuffle=True, random_state=42)
 
 #test_size=0.25 significa que usamos el 25% de los datos para el testeo y el %75 restante para el entrenamiento 
 ```
@@ -757,109 +1017,74 @@ fig.suptitle("Regresión lineal")
 plt.show()
 ```
 
-## Modelos con mas de 1 variable
+# Entrenamiento de modelo lineal multivariable
 
-**Importamos las funciones**
+
 ```{python}
-
+import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
-```
 
-**Dividimos los datos en entrenamiento y validación.**
 
-```{python}
-X = Datos_log[['ln_B05', 'ln_B04']]  
-y = Datos_log['ln_turbidez']  
-```
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_banda.csv")
+X = Datos[['B05', 'B08', 'B07', 'B06', 'B04']]  
+y = Datos['turbidez']  
 
-Definimos: 
-
-**df**, un DataFrame que contiene los datos de turbidez y reflectancia;
-
-**X** para que sea los valores de reflectancia de una banda en particular;
-
-**y** para que sea la turbidez.
-
-**Dividimos en datos para el entrenamiento y validación**
-```{python}
 X_train, X_test, y_train, y_test = train_test_split(
-  X, y, test_size=0.25, shuffle=True  #hace una mezcla 
+    X, y, test_size=0.25, shuffle=True, random_state=42
 )
 
-#test_size=0.25 significa que usamos el 25% de los datos para el testeo y el %75 restante para el entrenamiento 
-```
+modelo = LinearRegression()
+modelo.fit(X_train, y_train)
 
-Conjunto de datos para el entrenamiento
-**X_train** y **X_test**
+# Predicciones
+y_pred = modelo.predict(X_test)
 
-Conjunto de datos para la validación
-**y_train** y **y_test**
-
-**Creamos el modelo de regresión**
-
-```{python}
-regressor = LinearRegression().fit(X_train, y_train)
-```
-
-**LinearRegression()** Crea el modelo de regresión lineal llamado "*regressor*". Este modelo, se entrena con la función **.fit** a partir de los datos de entrenamiento (X_train, y_train)
-
-
-**Evaluamos el modelo generado a partir de las métricas de desempeño.**
-
-```{python}
-y_pred = regressor.predict(X_test)
-p_rmse = mean_squared_error(y_test, y_pred)
-p_r2 = r2_score(y_test, y_pred)
-```
-Con la función **print** visualizamos los valores de las métricas de desempeño
-```{python}
-print("RMSE", p_rmse) 
-print("R2", p_r2)
-```
-
-Para ver la ecuación del modelo de regresión
-
-`
-
-```{python}
-intercept = regressor.intercept_
-coefficients = regressor.coef_
-feature_names = X.columns # Obtiene los nombres de las columnas directamente de tu DataFrame X
-
-equation_str = f"ln_turbidez = {intercept:.2f}"
-
-for i, coef in enumerate(coefficients):
-    equation_str += f" + ({coef:.2f} * {feature_names[i]})"
-
-print("\n--- Ecuación del Modelo de Regresión Lineal Múltiple ---")
-print(equation_str)
-print("-------------------------------------------------------")
-
-# (El resto de tu código para predicciones y evaluación, como ya lo tienes)
-y_pred = regressor.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
+# Métricas
 r2 = r2_score(y_test, y_pred)
-print(f"\nError Cuadrático Medio (MSE): {mse:.2f}")
-print(f"Coeficiente de Determinación (R2): {r2:.2f}")
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
-print(f"\nCoeficientes del modelo:")
-for i, col_name in enumerate(X.columns):
-    print(f"  {col_name}: {regressor.coef_[i]:.2f}")
-print(f"Intercepto del modelo: {regressor.intercept_:.2f}")
+print(f"R²: {r2:.4f}")
+print(f"RMSE: {rmse:.4f}")
+
+#Ver coefidiones del modelo
+print("Intercepto:", modelo.intercept_)
+print("Coeficientes:")
+for nombre, coef in zip(X.columns, modelo.coef_):
+    print(f"{nombre}: {coef:.4f}")
+
+# Predicciones para entrenamiento y test
+y_train_pred = modelo.predict(X_train)
+y_test_pred = modelo.predict(X_test)
 
 plt.figure(figsize=(10, 6))
-plt.scatter(y_test, y_pred, alpha=0.6)
-plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--', lw=2)
-plt.xlabel("Valores Reales (ln_turbidez)")
-plt.ylabel("Predicciones del Modelo")
-plt.title("Valores Reales vs. Predicciones del Modelo de Regresión Lineal Múltiple")
+
+# Entrenamiento
+plt.scatter(y_train, y_train_pred, color='blue', label='Entrenamiento', alpha=0.6)
+
+# Test
+plt.scatter(y_test, y_test_pred, color='green', label='Test', alpha=0.6)
+
+# Línea ideal (y = x)
+min_val = min(min(y_train), min(y_test))
+max_val = max(max(y_train), max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], 'k--', lw=2, label='Ideal')
+
+plt.xlabel('Turbidez real')
+plt.ylabel('Turbidez predicha')
+plt.title('Regresión Lineal: Valores Reales vs. Predichos')
+plt.legend()
 plt.grid(True)
+plt.tight_layout()
 plt.show()
+
 ```
-## Métodos de aprendizaje automático 
+
+
+# Métodos de aprendizaje automático 
 Proximamente...
 
 
