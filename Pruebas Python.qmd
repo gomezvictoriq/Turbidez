@@ -227,3 +227,427 @@ print(correlacion_turbidez)
 ```
 
 
+
+# Prueba con booststapp
+1. Importo las librerías
+
+```{python}
+
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+```
+
+Estas bibliotecas son:
+
+pandas: para manejar el archivo .csv y los datos en DataFrame.
+
+numpy: para generar índices aleatorios con np.random.choice.
+
+sklearn.linear_model: para usar la regresión lineal.
+
+sklearn.metrics: para calcular el RMSE y el R².
+
+2. Leer los datos
+
+
+```{python}
+df = pd.read_csv(r"D:\GIT\Turbidez\Turbidez_FINAL.csv")
+X = df[['B05']].values
+y = df['turbidez'].values
+
+
+```
+
+Se carga el archivo CSV.
+
+X contiene la columna B05, usada como variable predictora.
+
+y contiene la variable objetivo: turbidez.
+
+.values transforma los DataFrame/Series a arrays de NumPy, necesarios para sklearn.
+
+3. Configuración del bootstrapping
+
+
+```{python}
+n_iteraciones = 100
+n_muestras = len(df)
+
+```
+
+4. Inicializar listas para guardar métricas
+```{python}
+rmse_scores = []
+r2_scores = []
+
+```
+
+Se crean listas vacías para guardar los valores de RMSE y R² de cada iteración.
+
+5. Ciclo de Bootstrapping
+
+
+```{python}
+for i in range(n_iteraciones):
+    # Índices bootstrap con reemplazo
+    indices = np.random.choice(n_muestras, size=n_muestras, replace=True)
+    
+    # Crear muestra bootstrap
+    X_boot = X[indices]
+    y_boot = y[indices]
+
+```
+
+np.random.choice(...) genera índices aleatorios con reemplazo, es decir, se pueden repetir.
+
+Luego se seleccionan las filas de X e y que corresponden a esos índices → eso forma una "muestra bootstrap".
+
+6. Entrenar el modelo
+
+```{python}
+modelo = LinearRegression().fit(X_boot, y_boot)
+
+```
+
+7. Predecir y calcular métricas
+
+
+```{python}
+y_pred = modelo.predict(X)
+from math import sqrt
+rmse = sqrt(mean_squared_error(y, y_pred))
+r2 = r2_score(y, y_pred)
+```
+
+modelo.predict(X): se predice sobre todo el dataset original (no sólo la muestra bootstrap).
+
+Se calculan:
+
+RMSE (error cuadrático medio raíz)
+
+R² (coeficiente de determinación, qué tan bien predice el modelo).
+
+🧾 8. Guardar resultados
+
+
+```{python}
+rmse_scores.append(rmse)
+r2_scores.append(r2)
+
+```
+
+9. Resultado promedio
+
+
+```{python}
+print(f"RMSE promedio: {np.mean(rmse_scores):.4f}")
+print(f"R² promedio: {np.mean(r2_scores):.4f}")
+
+```
+
+(Opcional) 10. Graficar distribución de R²
+
+
+```{python}
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.histplot(r2_scores, kde=True)
+plt.title("Distribución de R² (bootstrapping)")
+plt.xlabel("R²")
+plt.show()
+
+```
+
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+# Leer los datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Turbidez_FINAL.csv")
+X = df[['B05']].values
+y = df['turbidez'].values
+
+# Rango de valores sobre los cuales hacer predicciones
+x_range = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
+
+# Configuración
+n_iteraciones = 100
+predicciones = []
+
+# Bootstrap
+for i in range(n_iteraciones):
+    indices = np.random.choice(len(X), size=len(X), replace=True)
+    X_boot = X[indices]
+    y_boot = y[indices]
+
+    modelo = LinearRegression().fit(X_boot, y_boot)
+    y_pred = modelo.predict(x_range)
+    predicciones.append(y_pred)
+
+# Convertir a array y calcular promedio y desvío estándar
+predicciones = np.array(predicciones)  # shape: (n_iteraciones, 100)
+media_pred = predicciones.mean(axis=0)
+std_pred = predicciones.std(axis=0)
+
+# Graficar
+plt.figure(figsize=(8, 5))
+
+# Curva promedio
+plt.plot(x_range, media_pred, color="#17A77E", label="Modelo promedio")
+
+# Intervalo de confianza ±1 desviación estándar
+plt.fill_between(
+    x_range.ravel(),
+    media_pred - std_pred,
+    media_pred + std_pred,
+    color="#17A77E",
+    alpha=0.2,
+    label="±1 desvío estándar"
+)
+
+# Datos reales
+plt.scatter(X, y, color="#9D50A6", alpha=0.5, label="Datos reales")
+
+# Ejes y leyenda
+plt.xlabel("Banda 5")
+plt.ylabel("Turbidez")
+plt.title("Regresión lineal con bootstrapping (promedio)")
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+
+
+
+Pruebas de correlacion 
+
+
+
+
+```{python}
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from utils import run_bootstrap_linear_regression_analysis  # Asegurate de que esta función devuelve lo necesario
+
+# Leer los datos
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+y = Datos['turbidez']
+
+# Variables
+variables_fijas = ['B05']
+variables_a_agregar = ['B06', 'B08', 'B07', 'B04', 'B8A', 'B03', 'B02', 'B01', 'B12', 'B11']
+
+# Resultados
+resultados = []
+
+# Configuración de bootstrapping
+n_iteraciones_bootstrap = 200
+
+# Entrenamiento incremental
+for i in range(len(variables_a_agregar) + 1):
+    variables_usadas = variables_fijas + variables_a_agregar[:i]
+    X = Datos[variables_usadas].values
+
+    # División entrenamiento/test
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, shuffle=True, random_state=42
+    )
+
+    # Bootstrapping: obtener coeficientes promedio y métricas de entrenamiento
+    coef_prom, intercept_prom, r2_train_boot, rmse_train_boot = run_bootstrap_linear_regression_analysis(
+    X_train, y_train.to_numpy(), n_iteraciones=n_iteraciones_bootstrap)
+
+
+    # Modelo final con coeficientes promedio
+    modelo_final = LinearRegression()
+    modelo_final.coef_ = coef_prom
+    modelo_final.intercept_ = intercept_prom
+
+    # Predicción sobre testeo
+    y_pred = modelo_final.predict(X_test)
+    r2 = r2_score(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+    # R² ajustado
+    n_obs = len(y_test)
+    n_vars = X_test.shape[1]
+    r2_ajustado = 1 - (1 - r2) * (n_obs - 1) / (n_obs - n_vars - 1)
+
+    # AIC
+    residuals = y_test - y_pred
+    rss = np.sum(residuals ** 2)
+    k = X_test.shape[1] + 1  # +1 por el intercepto
+    aic = n_obs * np.log(rss / n_obs) + 2 * k
+
+    # Guardar resultados
+    resultados.append({
+        "variables": ", ".join(variables_usadas),
+        "num_variables": len(variables_usadas),
+        "R²_train (bootstrap)": r2_train_boot,
+        "RMSE_train (bootstrap)": rmse_train_boot,
+        "R²_test": r2,
+        "R²-ajustado": r2_ajustado,
+        "RMSE_test": rmse,
+        "AIC": aic
+    })
+
+# Convertir a DataFrame
+df_resultados = pd.DataFrame(resultados)
+print(df_resultados)
+
+```
+
+
+
+
+Paso 1: Función de selección automática con AIC (stepwise)
+```{python}
+import statsmodels.api as sm
+import pandas as pd
+import numpy as np
+
+def stepwise_selection(X, y, 
+                       initial_list=[], 
+                       threshold_in=0.01, 
+                       threshold_out=0.05, 
+                       verbose=True):
+    included = list(initial_list)
+    while True:
+        changed = False
+        # forward step
+        excluded = list(set(X.columns) - set(included))
+        new_pval = pd.Series(index=excluded)
+        for new_column in excluded:
+            model = sm.OLS(y, sm.add_constant(pd.DataFrame(X[included + [new_column]]))).fit()
+            new_pval[new_column] = model.pvalues[new_column]
+        best_pval = new_pval.min()
+        if best_pval < threshold_in:
+            best_feature = new_pval.idxmin()
+            included.append(best_feature)
+            changed = True
+            if verbose:
+                print(f"Agregado: {best_feature} (p={best_pval:.4f})")
+
+        # backward step
+        model = sm.OLS(y, sm.add_constant(pd.DataFrame(X[included]))).fit()
+        pvalues = model.pvalues.iloc[1:]  # sin el intercepto
+        worst_pval = pvalues.max()
+        if worst_pval > threshold_out:
+            worst_feature = pvalues.idxmax()
+            included.remove(worst_feature)
+            changed = True
+            if verbose:
+                print(f"Eliminado: {worst_feature} (p={worst_pval:.4f})")
+
+        if not changed:
+            break
+
+    return included
+
+```
+
+📌 Paso 2: Aplicar selección a tus datos
+
+```{python}
+# Asumiendo que tus datos están en un DataFrame llamado Datos
+# y que turbidez es tu variable objetivo
+
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+
+X = Datos[['B05', 'B06', 'B08', 'B07', 'B04', 'B8A', 'B03', 'B02', 'B01', 'B11', 'B12']]
+y = Datos['turbidez']
+
+# Selección automática
+vars_seleccionadas = stepwise_selection(X, y)
+
+print("\nVariables seleccionadas:", vars_seleccionadas)
+
+```
+
+Paso 3: Validación cruzada del modelo seleccionado
+
+```{python}
+from sklearn.model_selection import cross_val_score, KFold
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from numpy import mean
+
+X_sel = Datos[vars_seleccionadas].values
+y_sel = y.values
+
+# Modelo lineal
+model = LinearRegression()
+cv = KFold(n_splits=5, shuffle=True, random_state=42)
+
+# MSE negativo → se invierte para obtener el RMSE
+rmse_scores = -cross_val_score(model, X_sel, y_sel, scoring='neg_root_mean_squared_error', cv=cv)
+r2_scores = cross_val_score(model, X_sel, y_sel, scoring='r2', cv=cv)
+
+print(f"\nCV RMSE promedio: {mean(rmse_scores):.2f}")
+print(f"CV R² promedio: {mean(r2_scores):.4f}")
+
+```
+
+📌 Paso 4: Evaluar AIC del modelo final (opcional)
+
+```{python}
+X_const = sm.add_constant(Datos[vars_seleccionadas])
+modelo_final = sm.OLS(y, X_const).fit()
+print(f"AIC del modelo final: {modelo_final.aic:.2f}")
+print(modelo_final.summary())
+
+```
+
+```{python}
+import matplotlib.pyplot as plt
+import seaborn as sns
+import statsmodels.api as sm
+
+# Asumiendo que tus datos están en un DataFrame llamado Datos
+X = Datos[['B05', 'B04']]
+y_real = Datos['turbidez']
+
+# Agregar constante y ajustar modelo
+X_const = sm.add_constant(X)
+modelo = sm.OLS(y_real, X_const).fit()
+y_est = modelo.predict(X_const)
+
+# Gráfico
+plt.figure(figsize=(6,6))
+sns.scatterplot(x=y_real, y=y_est, color='blue', s=60)
+plt.plot([y_real.min(), y_real.max()], [y_real.min(), y_real.max()], 'r--')  # línea ideal
+plt.xlabel('Turbidez Real')
+plt.ylabel('Turbidez Estimada')
+plt.title('Turbidez: Real vs Estimada (Modelo con B05 y B04)')
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+```
+
+
+¿Por qué no se detiene?
+Porque tus variables probablemente estén:
+
+Altamente informativas
+
+No muy colineales (o no lo suficiente como para que el error deje de bajar)
+
+Y el conjunto de datos tiene suficientes muestras para compensar la penalización
+
+Pero ojo:
+AIC no detecta sobreajuste tan bien como validación cruzada.
+
+Podés tener un modelo con AIC bajo pero poca capacidad de generalización.

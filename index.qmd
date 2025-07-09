@@ -144,7 +144,7 @@ Con la función *pd.read_csv* le idicamos a pandas que queremos leer archivos .c
 
 ```{python}
 df1_lab = pd.read_csv(r"D:\GIT\Turbidez\datos\base_de_datos_lab.csv")
-df2_gis = pd.read_csv(r"D:\GIT\Turbidez\datos\base_de_datos_gis.csv")
+df2_gis = pd.read_csv(r"D:\GIT\Turbidez\datos\base_de_datos_gis_acolite.csv")
 ```
 
 **df1_lab** DataFrame de datos provenientes del laboratorio.
@@ -158,35 +158,20 @@ Video de YouTube [¿Qué es un DataFrame?](https://www.youtube.com/watch?v=LnH_S
 Verificamos que los datos se han leído y se crearon correctamente ambos DataFrame por separado, con *print* 
 
 ```{python}
-print(df1_lab.head())
-print(df2_gis)
+df1_lab.head()
+
+df2_gis.head()
 ```
 
 **Nota:** La primer columna (donde se ven los valores 0,1,2,3,4, ...) es el *índice* que agrega pandas por defecto al DataFrame, esa columna no forma parte del csv original.
 
-**Hacemos un filtrado en el DataFrame de datos espectrales**
-
-En la tabla original de los datos espectrales en la columna *pixel* se menciona 1x1 y 3x3. Cada píxel contiene un valor de reflectancia medida por el sensor de Sentinel-2.
-
-El valor de reflectancia de un único píxel (1x1) puede estar afectado por el de los píxeles adyacentes. Para considerar este efecto, se reliazó una grila de 3x3 aldedor del pixel central. Luego se calcula el promedio de la reflectancia de todos los píxeles (incluído el central). Tomamos este valor promedio para nuestro estudio, por lo que se conservan unicamente las filas donde pixel=3x3, 
-
-**IMPORTANTE**: Esta etapa es necesaria realizarla, porque hay valores de reflectancia tanto para píxles de 1x1 y de 3x3, y a la hora de operar con la tabla la librería *pandas* tomará ambos valores y realizará cálculos erroneos.
-
-Para esto, realizamos un filtrado y creamos un nuevo DataFrame **"df_gis3x3"**, el cual se obtiene al hacer un filtrado en el DataFrame original. 
-
-```{python}
-df_gis3x3 = df2_gis[(df2_gis['pixel'] == '3x3')]
-print(df_gis3x3.head())
-```
-
-**Nota:** se conserva el índice del original
 
 **Combinamos ambos DataFrame para tener los datos en una única base de datos.**
 
 Lo defimos como **df_combinado**, para esto utilizamos la función *pd.merge* para realizar la combinación.
 
 ```{python}
-df_combinado = pd.merge(df1_lab, df_gis3x3, on=['latitud', 'longitud','fecha'], how='inner')
+df_combinado = pd.merge(df1_lab, df2_gis, on=['latitud', 'longitud','fecha'], how='inner')
 ```
 
 **on=['latitud', 'longitud','fecha']**	Especifica las columnas por las cuales se unirán los dos DataFrames. En este caso, por coincidencias exactas en latitud, longitud y fecha.
@@ -196,7 +181,7 @@ df_combinado = pd.merge(df1_lab, df_gis3x3, on=['latitud', 'longitud','fecha'], 
 Verificamos que la combinacion se haya realizado correctamente
 
 ```{python}
-print(df_combinado.head())
+df_combinado.head()
 ```
 
 **Filtramos la turbidez del DataFrame**
@@ -210,7 +195,7 @@ df_turbidez = df_combinado[(df_combinado['param'] == 'turb')]
 
 Verificamos
 ```{python}
-print(df_turbidez.head())
+df_turbidez.head()
 ```
 
 **Nota:** Se han eliminado las filas de ph, cond, sol_sus, etc. Se conserva el índice del DataFrame original.
@@ -220,9 +205,9 @@ print(df_turbidez.head())
 Creamos un nuevo DataFrame a partir de *df_turbidez*. Con la función **.drop** especificamos que columnas queremos eliminar.
 
 ```{python}
-df_turbidez_banda = df_turbidez.drop(columns=['longitud','latitud','punto','pixel','fecha','param'])
+df_turbidez_banda = df_turbidez.drop(columns=['longitud','latitud','punto','fecha','param'])
 
-print(df_turbidez_banda.head())
+df_turbidez_banda.head()
 ```
 
 **Nota:** Solo nos quedamos con las columnas valor,banda y reflect.
@@ -233,7 +218,7 @@ Como los valores de esa columna son de turbidez, directamente cambiamos el nombr
 ```{python}
 df_turbidez_banda.rename(columns={'valor': 'turbidez'}, inplace=True)
 
-print(df_turbidez_banda.head())
+df_turbidez_banda.head()
 ```
 
 **Creamos la tabla final**
@@ -298,7 +283,8 @@ df_final.to_csv('Turbidez_FINAL2.csv', index=False)
 import pandas as pd
 
 df = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
-print(df.head())
+
+df.head()
 ```
 
 # Prueba de modelo lineal
@@ -439,8 +425,27 @@ plt.show()
 
 
 # Pruebas de correlación
-## Prueba de correlación C1: turbidez vs bandas
-Para ser mas rigurosos, agregamos mas etapas durante el entrenamiento de nuestro modelo lineal.
+
+Para ser más rigurosos, agregamos más etapas durante el entrenamiento de nuestro modelo lineal.
+
+En esta etapa nos interesa estimar la turbidez por medio de modelos lineales sencillos, para encontrar mejores modelos podemos aplicar transformaciones logarítmicas con el objetivo principal de linealizar relaciones no lineales.
+
+Primeramente se probará un modelo sin aplicar ninguna transformaciones en las variables. 
+
+En las siguientes secciones, se aplicará logaritmo en la turbidez, en las bandas espectrales y en en ambas, con el fin de evaluar en rendimiento de los modelos y seleccionar los mejores, según sus métricas de desempeño.
+
+Se utilizará el coeficiente de correlación lineal **r**, para evaluar la relación lineal entre la turdidez y las distintas bandas (con y sin transformación logarítmica).
+
+Esta medida indica cuanto se relacionan dos variables, puede tomar valores desde -1 a +1: 
+
+• +1 correlación lineal perfecta positiva.
+
+•  0 sin correlación.
+
+• -1 correlación lineal perfecta negativa.
+
+
+## Prueba de correlación C1: (sin aplicar logaritmo)
 
 **Importamos *pandas* para leer los datos**
 
@@ -453,14 +458,6 @@ Datos= pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
 ```
 
 **Calculamos coeficiente de correlacion lineal "r" entre la turbidez y cada banda con la función *.corr* de pandas.** 
-
-Esta medida indica cuanto se relacionan dos variables, puede tomar valores desde -1 a +1: 
-
-• +1 correlación lineal perfecta positiva.
-
-•  0 sin correlación.
-
-• -1 correlación lineal perfecta negativa.
 
 ```{python}
 #| code-fold: true
@@ -478,43 +475,74 @@ df_correlaciones1 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 
 df_correlaciones1 = df_correlaciones1.sort_values(by='r', ascending=False).reset_index(drop=True)
 
 df_correlaciones1['Banda'] = "turb vs " + df_correlaciones1['Banda'].astype(str)
-df_correlaciones1.rename(columns={'Banda': 'Correlación 1'}, inplace=True)
+df_correlaciones1.rename(columns={'Banda': 'Combinación 1'}, inplace=True)
 
 df_correlaciones1.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C1_turb_vs_banda.csv', index=False)
+
+
+#Creo archivo csv para usarlo para entrenar modelos
+Datos.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv", index=False)
 
 df_correlaciones1
 ```
 
-Observamos que el mejor valor se obtiene con **turb vs B05 = 0.8719**
 
-**Gráfica**
+**Gráfica Turbidez en funcion de las distintas bandas**
+
 ```{python}
 #| code-fold: true
+import pandas as pd
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(5, 5))
-plt.scatter(Datos['B05'], Datos['turbidez'], color='blue', alpha=0.7)
-plt.xlabel('B05')
-plt.ylabel('Turbidez')
-plt.title('Turbidez vs B05')
-plt.grid(True)
+# Cargar los datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
 
-descripcion = "Figura 1: Este gráfico de dispersión muestra la relación entre la banda espectral B05 y la turbidez del agua."
-plt.figtext(0.5, -0.04, descripcion,
-            wrap=True,                  # Permite que el texto se ajuste en varias líneas
-            horizontalalignment='center', # Centra el texto horizontalmente
-            fontsize=9,                 # Tamaño de la fuente
-            color='gray'                # Color del texto (comúnmente gris para pies de figura)
-           )
+# Seleccionar las columnas de bandas (excepto turbidez)
+bandas = [col for col in df.columns if col != 'turbidez']
 
+# Crear una figura con subplots
+# Seleccionar las columnas de bandas (excepto turbidez)
+bandas = [col for col in df.columns if col != 'turbidez']
+
+# Cantidad de bandas
+n = len(bandas)
+
+# Calcular las filas y columnas para el grid de subplots
+filas = (n + 2) // 3  # hasta 3 columnas por fila
+columnas = 3
+
+# Crear figura y ejes
+fig, axes = plt.subplots(filas, columnas, figsize=(12, filas * 3))
+axes = axes.flatten()
+
+# Graficar cada banda
+for i, banda in enumerate(bandas):
+    ax = axes[i]
+    ax.scatter(df[banda], df['turbidez'], alpha=0.6, s=10)
+    ax.set_title(f'Turbidez vs {banda}', fontsize=10)
+    ax.set_xlabel(banda)
+    ax.set_ylabel('Turbidez')
+    ax.grid(True)
+
+# Ocultar los subplots vacíos si hay
+for j in range(i + 1, len(axes)):
+    fig.delaxes(axes[j])
+
+# Ajustar espacio
+plt.tight_layout()
 plt.show()
+
 ```
 
-## Prueba de correlación C2: ln(turbidez) vs bandas
+Las mejores bandas para predecir turbidez (por correlación lineal) son:
+
+**B05 > B06 > B08 > B07 > B04**
+
+## Prueba de correlación C2: logaritmo en la turbidez
 
 **Importamos *nunpy* para operar con funciones matemáticas**
 
-Creamos un nuevo DataFrame para aplicarle el logaritmo a la colomna turbidez 
+Creamos un nuevo DataFrame para aplicarle el logaritmo a la colomna turbidez.
 
 ```{python}
 #| code-fold: true
@@ -526,6 +554,8 @@ Datos_turb_log['turbidez'] = np.log(Datos_turb_log['turbidez'])
 #Cambio el nombre la columna "turbidez" luego de aplicar el logaritmo
 Datos_turb_log = Datos_turb_log.rename(columns={'turbidez': 'ln_turbidez'})
 
+#Creo archivo csv para usarlo para entrenar modelos
+Datos_turb_log.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C2_ln_turb_banda.csv", index=False)
 #print(Datos_turb_log.head())
 
 ```
@@ -548,75 +578,136 @@ df_correlaciones2 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 
 df_correlaciones2 = df_correlaciones2.sort_values(by='r', ascending=False).reset_index(drop=True)
 
 df_correlaciones2['Banda'] = "ln_turb vs " + df_correlaciones2['Banda'].astype(str)
-df_correlaciones2.rename(columns={'Banda': 'Correlación 2'}, inplace=True)
+df_correlaciones2.rename(columns={'Banda': 'Combinación 2'}, inplace=True)
 
 df_correlaciones2.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C2_ln_turb_vs_banda.csv', index=False)
 
 df_correlaciones2
 ```
-Observamos que el mejor valor se obtiene con **ln_turb vs B05 = 0.7267**
 
 **Gráfica**
+
 ```{python}
 #| code-fold: true
+import pandas as pd
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(5, 5))
-plt.scatter(Datos_turb_log['B05'], Datos_turb_log['ln_turbidez'], color='blue', alpha=0.7)
-plt.xlabel('B05')
-plt.ylabel('ln(turbidez)')
-plt.title('ln(turbidez) vs B05')
-plt.grid(True)
+# Cargar los datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C2_ln_turb_banda.csv")
 
-descripcion = "Figura 2: Este gráfico de dispersión muestra la relación entre la banda espectral B05 y logaritmo de la turbidez del agua. Se observa poca linealidad entre ambas."
-plt.figtext(0.5, -0.06, descripcion,
-            wrap=True,                  # Permite que el texto se ajuste en varias líneas
-            horizontalalignment='center', # Centra el texto horizontalmente
-            fontsize=9,                 # Tamaño de la fuente
-            color='gray'                # Color del texto (comúnmente gris para pies de figura)
-           )
+# Seleccionar las columnas de bandas (excepto turbidez)
+bandas = [col for col in df.columns if col != 'ln_turbidez']
 
+# Crear una figura con subplots
+# Seleccionar las columnas de bandas (excepto turbidez)
+bandas = [col for col in df.columns if col != 'ln_turbidez']
+
+# Cantidad de bandas
+n = len(bandas)
+
+# Calcular las filas y columnas para el grid de subplots
+filas = (n + 2) // 3  # hasta 3 columnas por fila
+columnas = 3
+
+# Crear figura y ejes
+fig, axes = plt.subplots(filas, columnas, figsize=(12, filas * 3))
+axes = axes.flatten()
+
+# Graficar cada banda
+for i, banda in enumerate(bandas):
+    ax = axes[i]
+    ax.scatter(df[banda], df['ln_turbidez'], alpha=0.6, s=10)
+    ax.set_title(f'ln_turbidez vs {banda}', fontsize=10)
+    ax.set_xlabel(banda)
+    ax.set_ylabel('ln_turbidez')
+    ax.grid(True)
+
+# Ocultar los subplots vacíos si hay
+for j in range(i + 1, len(axes)):
+    fig.delaxes(axes[j])
+
+# Ajustar espacio
+plt.tight_layout()
 plt.show()
 ```
 
-## Prueba de correlación C3: turbidez vs ln(bandas)
+El orden general se mantiene, pero los valores de r bajan un poco al aplicar el logaritmo a la turbidez.
+Las mejores bandas siguen siendo:
+B05 > B04 > B06 > B07 > B08
 
-**Importamos *nunpy* para operar con funciones matemáticas**
+Aunque r haya bajado ligeramente, esas bandas siguen siendo las más prometedoras predictoras lineales.
 
-Creaamos un nuevo DataFrame para aplicarle el logaritmo a todas las columnas 
+## Prueba de correlación C3: logaritmo en las bandas
+
+Anteriormente se estaba trabajando con una base de datos de reflectancias procesadas con Sen2Cor. Actualmente trabajamos con una nueva base de datos con las reflectancias corregidas por ACOLITE.
+
+Acolite y Sen2Cor son dos herramientas de software utilizadas para la corrección atmosférica de imágenes satelitales. Acolite se destaca en ambientes acuáticos eutróficos, mientras que Sen2Cor es un procesador más general para la creación de productos Sentinel-2 de nivel 2A.
+
+**IMPORTANTE:** Este cambio provocó errores en el código a partir de esta sección en adelante, el error se debe a que hay valores de reflectancia que son cero y negativos en la banda 12. 
+
+En las pruebas de correlación C3 y C4 aplicamos logaritmo a las bandas. Por defincion de logaritmo no ponemos tomar valores cero ni negativos. Para salvar este error, se procedió a filtrar filas con esos valores.
+
+Creaamos un nuevo DataFrame para aplicarle el logaritmo a las bandas.
+
+```{python}
+#| code-fold: true
+import pandas as pd
+
+# Leer los datos
+Datos = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+
+# Guardar cantidad original de filas
+filas_originales = Datos.shape[0]
+
+# Filtrar filas: nos quedamos solo con aquellas donde **todos los valores sean mayores a 0**
+Datos_filtrado = Datos[(Datos > 0).all(axis=1)]
+
+# Calcular cuántas filas se eliminaron
+filas_finales = Datos_filtrado.shape[0]
+filas_eliminadas = filas_originales - filas_finales
+
+# Mostrar resultado
+print(f"Se eliminaron {filas_eliminadas} filas que contenían ceros o valores negativos.")
+
+# Si querés seguir trabajando con el DataFrame filtrado:
+DatosC3_C4 = Datos_filtrado
+#DatosC3_C4
+```
+
+Aplicamos logaritmo a las bandas
 
 ```{python}
 #| code-fold: true
 import numpy as np
-import pandas as pd
 
-Banda_log = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+DatosC3 = DatosC3_C4.copy()
 
-col = [col for col in Banda_log.columns if col.startswith('B')]
+col = [col for col in DatosC3.columns if col.startswith('B')]
 
-Banda_log[col] = np.log(Banda_log[col])
+DatosC3[col] = np.log(DatosC3[col])
 
 #Cambiamos en nombre las columnas, agremamos ln_ a cada columna
 
-Banda_log.columns = ['ln_' + col for col in Banda_log.columns]
+DatosC3.columns = ['ln_' + col for col in DatosC3.columns]
 
-Banda_log.rename(columns={'ln_turbidez': 'turbidez'}, inplace=True)
+DatosC3.rename(columns={'ln_turbidez': 'turbidez'}, inplace=True)
 
-Banda_log.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv", index=False)
+#Creo archivo csv para usarlo para entrenar modelos
+DatosC3.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C3_turb_vs_ln_banda.csv", index=False)
 
-#print(Banda_log.head())
+#DatosC3
 ```
 
-Calculamos *r* entre el ln_turb y ln de cada banda, con la función **.corr** de pandas. 
+Calculamos *r* entre turb y ln de cada banda, con la función **.corr** de pandas. 
 
 ```{python}
 #| code-fold: true
-bandas_ln = [col for col in Banda_log.columns if col.startswith('ln_B')]
+bandas_ln = [col for col in DatosC3.columns if col.startswith('ln_B')]
 
 correlaciones = {}
 
 for banda in bandas_ln:
-    r = Banda_log['turbidez'].corr(Banda_log[banda])
+    r = DatosC3['turbidez'].corr(DatosC3[banda])
     correlaciones[banda] = r
 
 #Creamos un Data Frame.
@@ -625,65 +716,121 @@ df_correlaciones3 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 
 df_correlaciones3 = df_correlaciones3.sort_values(by='r', ascending=False).reset_index(drop=True)
 
 df_correlaciones3['Banda'] = "turb vs " + df_correlaciones3['Banda'].astype(str)
-df_correlaciones3.rename(columns={'Banda': 'Correlación 3'}, inplace=True)
+df_correlaciones3.rename(columns={'Banda': 'Combinación 3'}, inplace=True)
 
 
 df_correlaciones3.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C3_turb_vs_ln_banda.csv', index=False)
 
 df_correlaciones3
 ```
-Observamos que el mejor valor se obtiene con **turb vs ln_B05  0.8320**
+
+ln_B05 , ln_B06 , ln_B07 , ln_B08
+
+Estas cuatro variables transformadas logarítmicamente se correlacionan de forma fuerte con la turbidez.
 
 **Gráfica**
 ```{python}
 #| code-fold: true
+import pandas as pd
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(5, 5))
-plt.scatter(Banda_log['ln_B05'], Banda_log['turbidez'], color='blue', alpha=0.7)
-plt.xlabel('ln(B05)')
-plt.ylabel('turbidez')
-plt.title('turbidez vs de ln(B05)')
-plt.grid(True)
+# Cargar los datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C3_turb_vs_ln_banda.csv")
 
-descripcion = "Figura 3: Este gráfico de dispersión muestra la relación entre ln(B05) y turbidez. Se observa una mejora de la linealidad entre ambas."
-plt.figtext(0.5, -0.04, descripcion,
-            wrap=True,                  # Permite que el texto se ajuste en varias líneas
-            horizontalalignment='center', # Centra el texto horizontalmente
-            fontsize=9,                 # Tamaño de la fuente
-            color='gray'                # Color del texto (comúnmente gris para pies de figura)
-           )
+# Seleccionar las columnas de bandas (excepto turbidez)
+bandas = [col for col in df.columns if col.startswith('ln_B')]
 
+# Crear una figura con subplots
+# Seleccionar las columnas de bandas (excepto turbidez)
+bandas = [col for col in df.columns if col.startswith('ln_B')]
+
+# Cantidad de bandas
+n = len(bandas)
+
+# Calcular las filas y columnas para el grid de subplots
+filas = (n + 2) // 3  # hasta 3 columnas por fila
+columnas = 3
+
+# Crear figura y ejes
+fig, axes = plt.subplots(filas, columnas, figsize=(12, filas * 3))
+axes = axes.flatten()
+
+# Graficar cada banda
+for i, banda in enumerate(bandas):
+    ax = axes[i]
+    ax.scatter(df[banda], df['turbidez'], alpha=0.6, s=10)
+    ax.set_title(f'Turbidez vs {banda}', fontsize=10)
+    ax.set_xlabel(banda)
+    ax.set_ylabel('Turbidez')
+    ax.grid(True)
+
+# Ocultar los subplots vacíos si hay
+for j in range(i + 1, len(axes)):
+    fig.delaxes(axes[j])
+
+# Ajustar espacio
+plt.tight_layout()
 plt.show()
 ```
 
-## Prueba de correlación C4: ln(turbidez) vs ln(bandas)
+## Prueba de correlación C4: logaritmo en turbidez y en bandas
 
-**Importamos *nunpy* para operar con funciones matemáticas**
+Primeramente verificamos que no hayan valores negativos y cero. Ya que por defincion de logaritno no los podremos utilizar.
+
+```{python}
+#| code-fold: true
+import pandas as pd
+
+# Leer los datos
+Datos = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+
+# Guardar cantidad original de filas
+filas_originales = Datos.shape[0]
+
+# Filtrar filas: nos quedamos solo con aquellas donde **todos los valores sean mayores a 0**
+Datos_filtrado = Datos[(Datos > 0).all(axis=1)]
+
+# Calcular cuántas filas se eliminaron
+filas_finales = Datos_filtrado.shape[0]
+filas_eliminadas = filas_originales - filas_finales
+
+# Mostrar resultado
+print(f"Se eliminaron {filas_eliminadas} filas que contenían ceros o valores negativos.")
+
+# Si querés seguir trabajando con el DataFrame filtrado:
+DatosC3_C4 = Datos_filtrado
+#DatosC3_C4
+```
 
 Creaamos un nuevo DataFrame para aplicarle el logaritmo a todas las columnas 
+
+Importamos *nunpy* para operar con funciones matemáticas
 
 ```{python}
 #| code-fold: true
 import numpy as np
 
-Datos_log = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
-Datos_log = np.log(Datos_log)
+DatosC4 = np.log(DatosC3_C4)
 #Cambiamos en nombre las columnas, agremamos ln_ a cada columna
-Datos_log.columns = ['ln_' + col for col in Datos_log.columns]
-#print(Datos_log.head())
+DatosC4.columns = ['ln_' + col for col in DatosC4.columns]
+
+#Creo archivo csv para usarlo para entrenar modelos
+DatosC4.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv", index=False)
+
+#DatosC4.head()
 ```
 
 Calculamos *r* entre el ln_turb y ln de cada banda, con la función **.corr** de pandas. 
 
 ```{python}
 #| code-fold: true
-bandas_ln = [col for col in Datos_log.columns if col.startswith('ln_B')]
+
+bandas_ln = [col for col in DatosC4.columns if col.startswith('ln_B')]
 
 correlaciones = {}
 
 for banda in bandas_ln:
-    r = Datos_log['ln_turbidez'].corr(Datos_log[banda])
+    r = DatosC4['ln_turbidez'].corr(DatosC4[banda])
     correlaciones[banda] = r
 
 #Creamos un Data Frame.
@@ -692,36 +839,71 @@ df_correlaciones4 = pd.DataFrame(list(correlaciones.items()), columns=['Banda', 
 df_correlaciones4 = df_correlaciones4.sort_values(by='r', ascending=False).reset_index(drop=True)
 
 df_correlaciones4['Banda'] = "ln_turb vs " + df_correlaciones4['Banda'].astype(str)
-df_correlaciones4.rename(columns={'Banda': 'Correlación 4'}, inplace=True)
+df_correlaciones4.rename(columns={'Banda': 'Combinación 4'}, inplace=True)
 
 df_correlaciones4.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C4_ln_turb_vs_ln_banda.csv', index=False)
 
 df_correlaciones4
 ```
-Observamos que el mejor valor se obtiene con **ln_turb vs ln_B05  0.7716**
+
 
 **Gráfica**
+
 ```{python}
 #| code-fold: true
+import pandas as pd
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(5, 5))
-plt.scatter(Datos_log['ln_B05'], Datos_log['ln_turbidez'], color='blue', alpha=0.7)
-plt.xlabel('ln(B05)')
-plt.ylabel('ln(turbidez)')
-plt.title('ln(turbidez) vs de ln(B05)')
-plt.grid(True)
+# Cargar los datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv")
 
-descripcion = "Figura 3: Este gráfico de dispersión muestra la relación entre ln(B05) y ln(turbidez)."
-plt.figtext(0.5, -0.04, descripcion,
-            wrap=True,                  # Permite que el texto se ajuste en varias líneas
-            horizontalalignment='center', # Centra el texto horizontalmente
-            fontsize=9,                 # Tamaño de la fuente
-            color='gray'                # Color del texto (comúnmente gris para pies de figura)
-           )
+# Seleccionar las columnas de bandas (excepto turbidez)
+bandas = [col for col in df.columns if col != 'ln_turbidez']
 
+# Crear una figura con subplots
+# Seleccionar las columnas de bandas (excepto turbidez)
+bandas = [col for col in df.columns if col != 'ln_turbidez']
+
+# Cantidad de bandas
+n = len(bandas)
+
+# Calcular las filas y columnas para el grid de subplots
+filas = (n + 2) // 3  # hasta 3 columnas por fila
+columnas = 3
+
+# Crear figura y ejes
+fig, axes = plt.subplots(filas, columnas, figsize=(12, filas * 3))
+axes = axes.flatten()
+
+# Graficar cada banda
+for i, banda in enumerate(bandas):
+    ax = axes[i]
+    ax.scatter(df[banda], df['ln_turbidez'], alpha=0.6, s=10)
+    ax.set_title(f'ln_turbidez vs {banda}', fontsize=10)
+    ax.set_xlabel(banda)
+    ax.set_ylabel('ln_turbidez')
+    ax.grid(True)
+
+# Ocultar los subplots vacíos si hay
+for j in range(i + 1, len(axes)):
+    fig.delaxes(axes[j])
+
+# Ajustar espacio
+plt.tight_layout()
 plt.show()
 ```
+
+B05, B04, B06, B07, B08 son los mejores candidatos como predictores en un modelo de regresión. Tienen una correlación fuerte con la turbidez, por encima de 0.78.
+
+
+**Comparación con combinaciones anteriores:**
+
+| Combinación | Variables transformadas | Mejor r        |
+| ----------- | ----------------------- | -------------- |
+| 1           | turbidez vs Banda       | B05 (0.88)     |
+| 2           | ln(turb) vs Banda       | B05 (0.80)     |
+| 3           | turbidez vs ln(Banda)   | B05 (0.72)     |
+| 4           | ln(turb) vs ln(Banda)   | B05 (0.87)     |
 
 # Seleción de variables
 Se resume en una tabla las pruebas de correlación realizadas.
@@ -739,17 +921,36 @@ C_comb = pd.concat([C1, C2 ,C3, C4], axis=1)
 C_comb
 ```
 
-Se puede observar que en C1 y C3 las correlaciones son mas altas respecto a C2 y C4. Por que que se seguirá el análisis con estas combinaciones:
+A partir del análisis con las correlaciones entre turbidez (y su logaritmo) y distintas bandas (y sus logaritmos). Se puede observar que en las combinaciones 1 y 4 las correlaciones son mas altas respecto a C2 y C3. Por que que se seguirá el análisis con estas combinaciones:
 
-  • turb (bandas)
+  • Combinación 1: turb vs bandas
 
-  • turb (ln_bandas)
+  • Combinación 4: ln_turb vs ln_bandas
 
-Se probarán modelos con ambas combinaciones por separado y se evalurá su desempeño.
+Se entrenarán modelos con ambas combinaciones por separado y se evalurá su desempeño.
 
-Se utilizará *AIC* @Chatterjee2015, como criterio para la selección de variables.
+Todos los modelos serán sometidos a bootstrapping con enfoque out-of-bag (OOB):
 
-## Combinación 1: turb(bandas)
+→ Donde se tomará el 75% de los datos ***con reemplazo*** para entrenamiento;
+→ Luego se usa el 25% restante (no muestreados) como conjunto de prueba (test).
+
+![Boostrapping](D:\GIT\Turbidez\img\Bootstrapping.jpg)
+
+Proponemos avanzar hacia un modelo multivariable, utilizando el *AIC* @Chatterjee2015 como criterio de seleccion de variables, este criterio es muy conveniente para encontrar el modelo de mejor balance entre ajuste y complejidad.
+
+**¿Qué hace el AIC?**
+
+→ Penaliza modelos con demasiadas variables para evitar sobreajuste.
+
+→ Se busca minimizar el AIC: cuanto más bajo, mejor el modelo.
+
+→ No requiere que las variables tengan alta correlación individual, pero sí que mejoren el modelo conjunto.
+
+AIC=n⋅ln(RMSE²)+2k
+
+
+## Combinación 1: turb vs bandas
+
 ```{python}
 #| code-fold: true
 from sklearn.model_selection import train_test_split
@@ -757,65 +958,72 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from utils import run_bootstrap_linear_regression_analysis  # Asegurate de que esta función devuelve lo necesario
 
-Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_banda.csv")
-
-# Variable objetivo
+# Leer los datos
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
 y = Datos['turbidez']
 
-# Variable fija (B05 siempre presente)
+# Variables
 variables_fijas = ['B05']
+variables_a_agregar = ['B06', 'B08', 'B07', 'B04', 'B8A', 'B03', 'B02', 'B01', 'B12', 'B11']
 
-# Variables que se irán agregando en orden específico (según tabla de correlaciones 1)
-variables_a_agregar = ['B08', 'B07', 'B06', 'B04', 'B8A', 'B03', 'B02', 'B01', 'B12' , 'B11']  # Se puede agregar o cambiar el orden
-
-# Lista para guardar resultados
+# Resultados
 resultados = []
 
-# Proceso de entrenamiento incremental
-for i in range(len(variables_a_agregar) + 1):
-    # Usamos solo las variables fijas al principio
-    variables_usadas = variables_fijas + variables_a_agregar[:i]
+# Configuración de bootstrapping
+n_iteraciones_bootstrap = 1000
 
-    # Seleccionamos los datos correspondientes
-    X = Datos[variables_usadas]
-    
-    # División entrenamiento/prueba
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=42)
-    
-    # Entrenar modelo
-    modelo = LinearRegression()
-    modelo.fit(X_train, y_train)
-    
-    # Predicción y evaluación
-    y_pred = modelo.predict(X_test)
+# Entrenamiento incremental
+for i in range(len(variables_a_agregar) + 1):
+    variables_usadas = variables_fijas + variables_a_agregar[:i]
+    X = Datos[variables_usadas].values
+
+    # División entrenamiento/test
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, shuffle=True, random_state=42
+    )
+
+    # Bootstrapping: obtener coeficientes promedio y métricas de entrenamiento
+    coef_prom, intercept_prom, r2_train_boot, rmse_train_boot = run_bootstrap_linear_regression_analysis(
+    X_train, y_train.to_numpy(), n_iteraciones=n_iteraciones_bootstrap)
+
+
+    # Modelo final con coeficientes promedio
+    modelo_final = LinearRegression()
+    modelo_final.coef_ = coef_prom
+    modelo_final.intercept_ = intercept_prom
+
+    # Predicción sobre testeo
+    y_pred = modelo_final.predict(X_test)
     r2 = r2_score(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
-    # Cálculo R2-ajustado
+    # R² ajustado
+    n_obs = len(y_test)
+    n_vars = X_test.shape[1]
+    r2_ajustado = 1 - (1 - r2) * (n_obs - 1) / (n_obs - n_vars - 1)
 
-    i = len(y)
-    j = X.shape[1]
-    r2_ajustado = 1 - (1 - r2) * (i - 1) / (i - j - 1)
-
-    # Cálculo de AIC
-    n = len(y_test)
+    # AIC
     residuals = y_test - y_pred
     rss = np.sum(residuals ** 2)
     k = X_test.shape[1] + 1  # +1 por el intercepto
-    aic = n * np.log(rss / n) + 2 * k
+    aic = n_obs * np.log(rss / n_obs) + 2 * k
 
-
-    # Guardamos los resultados
+    # Guardar resultados
     resultados.append({
         "variables": ", ".join(variables_usadas),
         "num_variables": len(variables_usadas),
-        "R²": r2,
+        "R²_train (bootstrap)": r2_train_boot,
+        "RMSE_train (bootstrap)": rmse_train_boot,
+        "R²_test": r2,
         "R²-ajustado": r2_ajustado,
-        "RMSE": rmse,
+        "RMSE_test": rmse,
         "AIC": aic
     })
-    
+
+# Convertir a DataFrame
 df_resultados = pd.DataFrame(resultados)
 df_resultados
 
@@ -835,78 +1043,107 @@ plt.ylabel('AIC')
 plt.grid(True)
 plt.show()
 ```
-## Combinación 2: turb(ln_bandas).
+
+¿Por qué el AIC baja al agregar más variables, si se supone que penaliza la complejidad?
+
+AIC=n⋅ln(RMSE²)+2k
+
+donde:
+
+n = número de observaciones
+k = número de parámetros (incluye el intercepto)
+ln(RMSE²) representa el ajuste del modelo
+
+AIC no busca modelos simples en sí, sino la mejor compensación entre ajuste y complejidad.
+
+A pesar de agregar más variables, el error (RMSE) está disminuyendo mucho, más rápido que lo que penaliza el AIC con +2k
+
+
+## Combinación 4: ln_turb vs ln_bandas
 ```{python}
 #| code-fold: true
+
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from utils import run_bootstrap_linear_regression_analysis  # Asegurate de que esta función devuelve lo necesario
 
+# Leer los datos
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv")
+y = Datos['ln_turbidez']
 
-Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv")
-
-#Variable objetivo
-y = Datos['turbidez']
-
-#Variable fija (B05 siempre presente)
+# Variables
 variables_fijas = ['ln_B05']
+variables_a_agregar = ['ln_B04', 'ln_B06', 'ln_B07', 'ln_B08', 'ln_B8A', 'ln_B03', 'ln_B02', 'ln_B01','ln_B11' ,'ln_B12']
 
-#Variables que se irán agregando en orden específico (según tabla de correlaciones 3)
-variables_a_agregar = ['ln_B08', 'ln_B07', 'ln_B06', 'ln_B04', 'ln_B8A', 'ln_B03', 'ln_B02', 'ln_B01', 'ln_B12' , 'ln_B11']
-
-#Lista para guardar resultados
+# Resultados
 resultados = []
 
-#Proceso de entrenamiento incremental
-for i in range(len(variables_a_agregar) + 1):
-    # Usamos solo las variables fijas al principio
-    variables_usadas = variables_fijas + variables_a_agregar[:i]
+# Configuración de bootstrapping
+n_iteraciones_bootstrap = 1000
 
-    # Seleccionamos los datos correspondientes
-    X = Datos[variables_usadas]
-    
-    # División entrenamiento/prueba
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=42)
-    
-    # Entrenar modelo
-    modelo = LinearRegression()
-    modelo.fit(X_train, y_train)
-    
-    # Predicción y evaluación
-    y_pred = modelo.predict(X_test)
+# Entrenamiento incremental
+for i in range(len(variables_a_agregar) + 1):
+    variables_usadas = variables_fijas + variables_a_agregar[:i]
+    X = Datos[variables_usadas].values
+
+    # División entrenamiento/test
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, shuffle=True, random_state=42
+    )
+
+    # Bootstrapping: obtener coeficientes promedio y métricas de entrenamiento
+    coef_prom, intercept_prom, r2_train_boot, rmse_train_boot = run_bootstrap_linear_regression_analysis(
+    X_train, y_train.to_numpy(), n_iteraciones=n_iteraciones_bootstrap)
+
+
+    # Modelo final con coeficientes promedio
+    modelo_final = LinearRegression()
+    modelo_final.coef_ = coef_prom
+    modelo_final.intercept_ = intercept_prom
+
+    # Predicción sobre testeo
+    y_pred = modelo_final.predict(X_test)
     r2 = r2_score(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
-    # Cálculo R2-ajustado
+    # Cálculo R² ajustado
+    n_obs = len(y_test)
+    n_vars = X_test.shape[1]
 
-    i = len(y)
-    j = X.shape[1]
-    r2_ajustado = 1 - (1 - r2) * (i - 1) / (i - j - 1)
+    if n_obs - n_vars - 1 != 0:
+     r2_ajustado = 1 - (1 - r2) * (n_obs - 1) / (n_obs - n_vars - 1)
+    else:
+     r2_ajustado = np.nan  # o podrías usar 0.0 si preferís
 
-    # Cálculo de AIC
-    n = len(y_test)
+
+
+    # AIC
     residuals = y_test - y_pred
     rss = np.sum(residuals ** 2)
     k = X_test.shape[1] + 1  # +1 por el intercepto
-    aic = n * np.log(rss / n) + 2 * k
+    aic = n_obs * np.log(rss / n_obs) + 2 * k
 
-
-    # Guardamos los resultados
+    # Guardar resultados
     resultados.append({
         "variables": ", ".join(variables_usadas),
         "num_variables": len(variables_usadas),
-        "R²": r2,
+        "R²_train (bootstrap)": r2_train_boot,
+        "RMSE_train (bootstrap)": rmse_train_boot,
+        "R²_test": r2,
         "R²-ajustado": r2_ajustado,
-        "RMSE": rmse,
+        "RMSE_test": rmse,
         "AIC": aic
     })
-    
+
+# Convertir a DataFrame
 df_resultados = pd.DataFrame(resultados)
 df_resultados
 ```
+
 **Gráfico de AIC**
 ```{python}
 #| code-fold: true
@@ -921,353 +1158,459 @@ plt.grid(True)
 plt.show()
 ```
 
-# Modelos combinacion 1: turb(bandas)
-## Modelo con B05
+# Entrenamiento de Modelos
+
+## Combinación 1: Turbidez vs Bandas
+
+### Modelo con B05
+
+$\text{Turbidez} = 1290.3786 \cdot B05 - 46.2658$
 
 ```{python}
 #| code-fold: true
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.pyplot as plt
+from utils import run_bootstrap_linear_regression_analysis
 
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
 
-Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_banda.csv")
-X = Datos[['B05']]  
-y = Datos['turbidez']  
+# Variables predictoras
+variables = ['B05']
+X_completo = df[variables].values
+y_completo = df['turbidez'].values
 
+# Separar entrenamiento y testeo
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, shuffle=True, random_state=42
+    X_completo, y_completo, test_size=0.25, random_state=42
 )
 
-#test_size=0.25 significa que usamos el 25% de los datos para el testeo y el %75 restante para el entrenamiento 
+# Ejecutar bootstrapping
+n_iteraciones_config = 1000
+coef_prom, intercept_prom, r2_train_boot, rmse_train_boot = \
+    run_bootstrap_linear_regression_analysis(X_train, y_train, n_iteraciones=n_iteraciones_config)
 
-modelo = LinearRegression()
-modelo.fit(X_train, y_train)
+# Modelo final con coeficientes promedio
+modelo_final_promedio = LinearRegression()
+modelo_final_promedio.coef_ = coef_prom
+modelo_final_promedio.intercept_ = intercept_prom
 
-# Predicciones
-y_pred = modelo.predict(X_test)
+# Predicción sobre entrenamiento y test
+y_train_pred = modelo_final_promedio.predict(X_train)
+y_test_pred = modelo_final_promedio.predict(X_test)
 
-# Métricas
-r2 = r2_score(y_test, y_pred)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+# Métricas en testeo
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
-print(f"R²: {r2:.4f}")
-print(f"RMSE: {rmse:.4f}")
-
-#Ver coefidiones del modelo
-print("Intercepto:", modelo.intercept_)
-print("Coeficientes:")
-for nombre, coef in zip(X.columns, modelo.coef_):
-    print(f"{nombre}: {coef:.4f}")
-
-# Predicciones para entrenamiento y test
-y_train_pred = modelo.predict(X_train)
-y_test_pred = modelo.predict(X_test)
-
-plt.figure(figsize=(10, 6))
+# ------------------ Gráfico con estilo personalizado ------------------ #
+plt.figure(figsize=(8, 5))
 
 # Entrenamiento
-plt.scatter(y_train, y_train_pred, color='blue', label='Entrenamiento', alpha=0.6)
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento")
 
 # Test
-plt.scatter(y_test, y_test_pred, color='green', label='Test', alpha=0.6)
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo")
 
-# Línea ideal (y = x)
-min_val = min(min(y_train), min(y_test))
-max_val = max(max(y_train), max(y_test))
-plt.plot([min_val, max_val], [min_val, max_val], 'k--', lw=2, label='Ideal')
+# Línea ideal
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
 
-plt.xlabel('Turbidez real')
-plt.ylabel('Turbidez predicha')
-plt.title('Regresión Lineal: Valores Reales vs. Predichos')
+plt.xlabel("Turbidez real")
+plt.ylabel("Turbidez predicha")
+plt.title(
+    f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
+    f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
+    f"R² testeo: {r2_test:.4f}, RMSE: {rmse_test:.4f}"
+)
 plt.legend()
-plt.grid(True)
+plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
+
+# ------------------ Coeficientes ------------------ #
+print("\nEcuación promedio del modelo:")
+for var, coef in zip(variables, coef_prom):
+    print(f"  {var}: {coef:.4f}")
+print(f"Intercepto: {intercept_prom:.4f}")
 ```
 
-## Modelo con 6 bandas
+### Modelo con 6 bandas
+
+$\text{Turbidez} = -199.0357 \cdot B05 + 4709.7174 \cdot B06 - 315.5704 \cdot B08 + 1692.5113 \cdot B07 - 706.0229 \cdot B04 - 4498.4379 \cdot B8A - 4.5705$
+
 
 ```{python}
 #| code-fold: true
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.pyplot as plt
+from utils import run_bootstrap_linear_regression_analysis
 
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
 
-Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_banda.csv")
-X = Datos[['B05', 'B08', 'B07', 'B06', 'B04', 'B8A']]  
-y = Datos['turbidez']  
+# Variables predictoras
+variables = ['B05', 'B06', 'B08', 'B07', 'B04', 'B8A']
+X_completo = df[variables].values
+y_completo = df['turbidez'].values
 
+# Separar entrenamiento y testeo
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, shuffle=True, random_state=42
+    X_completo, y_completo, test_size=0.25, random_state=42
 )
 
-modelo = LinearRegression()
-modelo.fit(X_train, y_train)
+# Ejecutar bootstrapping
+n_iteraciones_config = 1000
+coef_prom, intercept_prom, r2_train_boot, rmse_train_boot = \
+    run_bootstrap_linear_regression_analysis(X_train, y_train, n_iteraciones=n_iteraciones_config)
 
-# Predicciones
-y_pred = modelo.predict(X_test)
+# Modelo final con coeficientes promedio
+modelo_final_promedio = LinearRegression()
+modelo_final_promedio.coef_ = coef_prom
+modelo_final_promedio.intercept_ = intercept_prom
 
-# Métricas
-r2 = r2_score(y_test, y_pred)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+# Predicción sobre entrenamiento y test
+y_train_pred = modelo_final_promedio.predict(X_train)
+y_test_pred = modelo_final_promedio.predict(X_test)
 
-print(f"R²: {r2:.4f}")
-print(f"RMSE: {rmse:.4f}")
+# Métricas en testeo
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
-#Ver coefidiones del modelo
-print("Intercepto:", modelo.intercept_)
-print("Coeficientes:")
-for nombre, coef in zip(X.columns, modelo.coef_):
-    print(f"{nombre}: {coef:.4f}")
-
-# Predicciones para entrenamiento y test
-y_train_pred = modelo.predict(X_train)
-y_test_pred = modelo.predict(X_test)
-
-plt.figure(figsize=(10, 6))
+# ------------------ Gráfico con estilo personalizado ------------------ #
+plt.figure(figsize=(8, 5))
 
 # Entrenamiento
-plt.scatter(y_train, y_train_pred, color='blue', label='Entrenamiento', alpha=0.6)
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento")
 
 # Test
-plt.scatter(y_test, y_test_pred, color='green', label='Test', alpha=0.6)
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo")
 
-# Línea ideal (y = x)
-min_val = min(min(y_train), min(y_test))
-max_val = max(max(y_train), max(y_test))
-plt.plot([min_val, max_val], [min_val, max_val], 'k--', lw=2, label='Ideal')
+# Línea ideal
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
 
-plt.xlabel('Turbidez real')
-plt.ylabel('Turbidez predicha')
-plt.title('Regresión Lineal: Valores Reales vs. Predichos')
+plt.xlabel("Turbidez real")
+plt.ylabel("Turbidez predicha")
+plt.title(
+    f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
+    f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
+    f"R² testeo: {r2_test:.4f}, RMSE: {rmse_test:.4f}"
+)
 plt.legend()
-plt.grid(True)
+plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 
+# ------------------ Coeficientes ------------------ #
+print("\nEcuación promedio del modelo:")
+for var, coef in zip(variables, coef_prom):
+    print(f"  {var}: {coef:.4f}")
+print(f"Intercepto: {intercept_prom:.4f}")
 ```
 
-# Modelos combinacion 2: turb(ln_bandas)
-## Modelo con ln(B05)
+## Modelos con logaritmo en turbidez y bandas
+### Modelo con 1 variable (ln_B05)
+
+$\text{Turbidez} \approx e^{8.0315} \cdot B05^{1.7569}$
 
 ```{python}
 #| code-fold: true
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.pyplot as plt
+from utils import run_bootstrap_linear_regression_analysis
 
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv")
 
-Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv")
-X = Datos[['ln_B05']]  
-y = Datos['turbidez']  
+# Variables predictoras
+variables = ['ln_B05']
+X_completo = df[variables].values
+y_completo = df['ln_turbidez'].values
 
+# Separar entrenamiento y testeo
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, shuffle=True, random_state=42
+    X_completo, y_completo, test_size=0.25, random_state=42
 )
 
-modelo = LinearRegression()
-modelo.fit(X_train, y_train)
+# Ejecutar bootstrapping
+n_iteraciones_config = 1000
+coef_prom, intercept_prom, r2_train_boot, rmse_train_boot = \
+    run_bootstrap_linear_regression_analysis(X_train, y_train, n_iteraciones=n_iteraciones_config)
 
-# Predicciones
-y_pred = modelo.predict(X_test)
+# Modelo final con coeficientes promedio
+modelo_final_promedio = LinearRegression()
+modelo_final_promedio.coef_ = coef_prom
+modelo_final_promedio.intercept_ = intercept_prom
 
-# Métricas
-r2 = r2_score(y_test, y_pred)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+# Predicción sobre entrenamiento y test
+y_train_pred = modelo_final_promedio.predict(X_train)
+y_test_pred = modelo_final_promedio.predict(X_test)
 
-print(f"R²: {r2:.4f}")
-print(f"RMSE: {rmse:.4f}")
+# Métricas en testeo
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
-#Ver coefidiones del modelo
-print("Intercepto:", modelo.intercept_)
-print("Coeficientes:")
-for nombre, coef in zip(X.columns, modelo.coef_):
-    print(f"{nombre}: {coef:.4f}")
-
-# Predicciones para entrenamiento y test
-y_train_pred = modelo.predict(X_train)
-y_test_pred = modelo.predict(X_test)
-
-plt.figure(figsize=(10, 6))
+# ------------------ Gráfico con estilo personalizado ------------------ #
+plt.figure(figsize=(8, 5))
 
 # Entrenamiento
-plt.scatter(y_train, y_train_pred, color='blue', label='Entrenamiento', alpha=0.6)
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento")
 
 # Test
-plt.scatter(y_test, y_test_pred, color='green', label='Test', alpha=0.6)
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo")
 
-# Línea ideal (y = x)
-min_val = min(min(y_train), min(y_test))
-max_val = max(max(y_train), max(y_test))
-plt.plot([min_val, max_val], [min_val, max_val], 'k--', lw=2, label='Ideal')
+# Línea ideal
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
 
-plt.xlabel('Turbidez real')
-plt.ylabel('Turbidez predicha')
-plt.title('Regresión Lineal: Valores Reales vs. Predichos')
+plt.xlabel("Turbidez real")
+plt.ylabel("Turbidez predicha")
+plt.title(
+    f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
+    f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
+    f"R² testeo: {r2_test:.4f}, RMSE: {rmse_test:.4f}"
+)
 plt.legend()
-plt.grid(True)
+plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
+
+# ------------------ Coeficientes ------------------ #
+print("\nEcuación promedio del modelo:")
+for var, coef in zip(variables, coef_prom):
+    print(f"  {var}: {coef:.4f}")
+print(f"Intercepto: {intercept_prom:.4f}")
 ```
 
-## Modelo con 5 bandas
+### Modelo con 3 variables
+
+Escala Logaritmica
 
 ```{python}
 #| code-fold: true
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.pyplot as plt
+from utils import run_bootstrap_linear_regression_analysis
 
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv")
 
-Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\turb_vs_ln_banda.csv")
-X = Datos[['ln_B05', 'ln_B08', 'ln_B07', 'ln_B06', 'ln_B04']]  
-y = Datos['turbidez']  
+# Variables predictoras
+variables = ['ln_B05','ln_B04','ln_B06']
+X_completo = df[variables].values
+y_completo = df['ln_turbidez'].values
 
+# Separar entrenamiento y testeo
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, shuffle=True, random_state=42
+    X_completo, y_completo, test_size=0.25, random_state=42
 )
 
-modelo = LinearRegression()
-modelo.fit(X_train, y_train)
+# Ejecutar bootstrapping
+n_iteraciones_config = 1000
+coef_prom, intercept_prom, r2_train_boot, rmse_train_boot = \
+    run_bootstrap_linear_regression_analysis(X_train, y_train, n_iteraciones=n_iteraciones_config)
 
-# Predicciones
-y_pred = modelo.predict(X_test)
+# Modelo final con coeficientes promedio
+modelo_final_promedio = LinearRegression()
+modelo_final_promedio.coef_ = coef_prom
+modelo_final_promedio.intercept_ = intercept_prom
 
-# Métricas
-r2 = r2_score(y_test, y_pred)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+# Predicción sobre entrenamiento y test
+y_train_pred = modelo_final_promedio.predict(X_train)
+y_test_pred = modelo_final_promedio.predict(X_test)
 
-print(f"R²: {r2:.4f}")
-print(f"RMSE: {rmse:.4f}")
+# Métricas en testeo
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
-#Ver coefidiones del modelo
-print("Intercepto:", modelo.intercept_)
-print("Coeficientes:")
-for nombre, coef in zip(X.columns, modelo.coef_):
-    print(f"{nombre}: {coef:.4f}")
-
-# Predicciones para entrenamiento y test
-y_train_pred = modelo.predict(X_train)
-y_test_pred = modelo.predict(X_test)
-
-plt.figure(figsize=(10, 6))
+# ------------------ Gráfico con estilo personalizado ------------------ #
+plt.figure(figsize=(8, 5))
 
 # Entrenamiento
-plt.scatter(y_train, y_train_pred, color='blue', label='Entrenamiento', alpha=0.6)
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
 
 # Test
-plt.scatter(y_test, y_test_pred, color='green', label='Test', alpha=0.6)
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo", marker='^')
 
-# Línea ideal (y = x)
-min_val = min(min(y_train), min(y_test))
-max_val = max(max(y_train), max(y_test))
-plt.plot([min_val, max_val], [min_val, max_val], 'k--', lw=2, label='Ideal')
+# Línea ideal
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
 
-plt.xlabel('Turbidez real')
-plt.ylabel('Turbidez predicha')
-plt.title('Regresión Lineal: Valores Reales vs. Predichos')
+# Línea de tendencia sobre test
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # [pendiente, intercepto]
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
+
+plt.xlabel("Turbidez real")
+plt.ylabel("Turbidez predicha")
+plt.title(
+    f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
+    f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
+    f"R² testeo: {r2_test:.4f}, RMSE: {rmse_test:.4f}"
+)
 plt.legend()
-plt.grid(True)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+
+# ------------------ Coeficientes ------------------ #
+
+# Diccionario para renombrar las variables en notación matemática
+nombre_vars_latex = {
+    'ln_B05': 'ln(B05)',
+    'ln_B04': 'ln(B04)',
+    'ln_B06': 'ln(B06)'
+}
+
+# Construir términos con nombres renombrados
+terminos_latex = [
+    f"{coef:.4f} \\cdot {nombre_vars_latex[var]}"
+    for var, coef in zip(variables, coef_prom)
+]
+
+# Construir la ecuación completa en LaTeX
+ecuacion_latex = " + ".join(terminos_latex)
+ecuacion_latex = f"\\ln(\\text{{turbidez}}) = {ecuacion_latex} + {intercept_prom:.4f}"
+
+from IPython.display import display, Math
+display(Math(ecuacion_latex))
+```
+
+
+Escala Real
+```{python}
+#| code-fold: true
+
+# Transformo a escala real
+
+y_train_pred_real = np.exp(y_train_pred)
+y_test_pred_real = np.exp(y_test_pred)
+
+y_train_real = np.exp(y_train)
+y_test_real = np.exp(y_test)
+
+rmse_test_real = np.sqrt(mean_squared_error(y_test_real, y_test_pred_real))
+r2_test_real = r2_score(y_test_real, y_test_pred_real)
+
+#Grafico
+
+plt.figure(figsize=(8, 5))
+
+# Entrenamiento (en escala real)
+plt.scatter(y_train_real, y_train_pred_real, color="#9D50A6", alpha=0.5, label="Entrenamiento")
+
+# Test (en escala real)
+plt.scatter(y_test_real, y_test_pred_real, color="red", alpha=0.7, label="Test")
+
+# Línea ideal
+min_val = min(y_train_real.min(), y_test_real.min())
+max_val = max(y_train_real.max(), y_test_real.max())
+plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
+
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez predicha (NTU)")
+plt.title(
+    f"Regresión lineal en escala real\n"
+    f"R² testeo: {r2_test_real:.4f}, RMSE: {rmse_test_real:.4f} NTU"
+)
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 ```
+# Procesamiento de productos satelitales
+
+Para el procesamiento se utilizará la librería *rasterio* en python.
+
+Lectura de imágen raster y visualización del área de estudio.
+
+```{python}
+#| code-fold: true
+import rasterio as rs
+import matplotlib.pyplot as plt
+
+ruta = r"D:\GIT\Turbidez\recorte_acolite\2025-06-09.tif"
+
+# Abrir el archivo
+with rs.open(ruta) as raster:
+    #Bandas RGB para ver área de estudio
+    B02 = raster.read(2) #Azul
+    B03 = raster.read(3) #Verde
+    B04 = raster.read(4) #Rojo
+
+    #Para calcular NDWI con B03 y B11
+    B11 = raster.read(10)
+
+    #para el modelo
+    B05 = raster.read(5)
+    B06 = raster.read(6)
+    B07 = raster.read(7)
+
+# Composión de imagen 
+rgb = np.stack([B04, B03, B02], axis=-1)
+
+# Mejorar constraste
+def stretch(banda):
+    p2, p98 = np.percentile(banda, (2, 98))
+    return np.clip((banda - p2) / (p98 - p2 + 1e-6), 0, 1)
+
+rgb_stretched = np.stack([stretch(B04), stretch(B03), stretch(B02)], axis=-1)
+
+# Gráfico
+plt.imshow(rgb_stretched)
+plt.title("Río Paraná")
+plt.show()
 ```
 
-# Métodos de aprendizaje automático 
+
+Se utilizrá el índice NDWI para recortar la imágen satelital, y poder trabajar únicamente con los píxeles de agua.
+
+$NDWI=(B03-B11)/(B03+B11)$
+
+```{python}
+#| code-fold: true
+
+import numpy as np
+
+ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
+
+#+ 1e-6 para evitar división por cero
+
+# Binarización: agua = 1, no agua = 0
+ndwi_bin = np.where(ndwi >= 0.6, 1, 0)
+
+# Mostrar imagen con coordenadas reales
+plt.imshow(ndwi_bin, cmap='Greys')
+plt.title("NDWI")
+plt.colorbar(label="Agua (1) / No Agua (0)")
+plt.show()
+```
+
+Aplicamos la ecuacion hallada para ver la distribución de la turbidez en el río.
+
+
+# Métodos de aprendizaje automático
+
 Proximamente...
-
-
-
-
-
-```{python}
-import numpy as np
-from sklearn.datasets import load_diabetes
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.pyplot as plt # Para visualización, opcional
-
-# 1. Cargar el dataset
-X, y = load_diabetes(return_X_y=True)
-
-# 2. Seleccionar múltiples variables (características)
-# En este caso, usaremos todas las características disponibles en el dataset de diabetes.
-# X ya contiene todas las características por defecto cuando no se selecciona nada.
-# Si quisieras seleccionar un subconjunto específico, lo harías como te mostré antes:
-# selected_features_indices = [0, 2, 5, 8] # Ejemplo: indices 0, 2, 5 y 8
-# X = X[:, selected_features_indices]
-
-print(f"Dimensiones de X (características): {X.shape}") # (número_muestras, número_características)
-print(f"Dimensiones de y (objetivo): {y.shape}")         # (número_muestras,)
-
-# 3. Dividir los datos en conjuntos de entrenamiento y prueba
-# Es crucial tener un conjunto de prueba para evaluar el rendimiento del modelo en datos no vistos.
-# test_size=0.2 significa que el 20% de los datos se usarán para prueba.
-# random_state asegura que la división sea la misma cada vez que ejecutes el código, para reproducibilidad.
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-print(f"\nDimensiones de X_train: {X_train.shape}")
-print(f"Dimensiones de X_test: {X_test.shape}")
-print(f"Dimensiones de y_train: {y_train.shape}")
-print(f"Dimensiones de y_test: {y_test.shape}")
-
-# 4. Crear y entrenar el modelo de Regresión Lineal Múltiple
-# La clase LinearRegression de scikit-learn es la que necesitas.
-model = LinearRegression()
-
-# Entrenar el modelo con los datos de entrenamiento
-model.fit(X_train, y_train)
-
-# 5. Hacer predicciones en el conjunto de prueba
-y_pred = model.predict(X_test)
-
-# 6. Evaluar el rendimiento del modelo
-# Métricas comunes para regresión:
-
-# Error Cuadrático Medio (Mean Squared Error - MSE)
-# Mide el promedio de los cuadrados de los errores.
-mse = mean_squared_error(y_test, y_pred)
-print(f"\nError Cuadrático Medio (MSE): {mse:.2f}")
-
-# Coeficiente de Determinación (R-squared o R2)
-# Indica la proporción de la varianza en la variable dependiente que es predecible a partir de las variables independientes.
-# Un valor de 1.0 indica que el modelo predice perfectamente la variable objetivo.
-r2 = r2_score(y_test, y_pred)
-print(f"Coeficiente de Determinación (R2): {r2:.2f}")
-
-# Opcional: Analizar los coeficientes del modelo y el intercepto
-print(f"\nCoeficientes del modelo (pendientes para cada característica):")
-# Los nombres de las características para el dataset de diabetes son:
-feature_names = load_diabetes().feature_names
-for i, coef in enumerate(model.coef_):
-    print(f"  {feature_names[i]}: {coef:.2f}")
-
-print(f"Intercepto del modelo: {model.intercept_:.2f}")
-
-# Opcional: Visualizar las predicciones vs. los valores reales
-# Esto es más fácil de visualizar con una sola característica,
-# pero con múltiples características puedes graficar predicciones vs. valores reales.
-plt.figure(figsize=(10, 6))
-plt.scatter(y_test, y_pred, alpha=0.6)
-plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--', lw=2) # Línea de identidad (predicciones perfectas)
-plt.xlabel("Valores Reales (y_test)")
-plt.ylabel("Predicciones del Modelo (y_pred)")
-plt.title("Valores Reales vs. Predicciones del Modelo de Regresión Lineal Múltiple")
-plt.grid(True)
-plt.show()
-```
