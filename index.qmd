@@ -1256,7 +1256,7 @@ terminos_latex = [
 
 # Construir la ecuación completa en LaTeX
 ecuacion_latex = " + ".join(terminos_latex)
-ecuacion_latex = f"\\ln(\\text{{turbidez}}) = {ecuacion_latex} + {intercept_prom:.4f}"
+ecuacion_latex = f"turbidez = {ecuacion_latex} + {intercept_prom:.4f}"
 
 from IPython.display import display, Math
 display(Math(ecuacion_latex))
@@ -1358,7 +1358,7 @@ terminos_latex = [
 
 # Construir la ecuación completa en LaTeX
 ecuacion_latex = " + ".join(terminos_latex)
-ecuacion_latex = f"\\ln(\\text{{turbidez}}) = {ecuacion_latex} + {intercept_prom:.4f}"
+ecuacion_latex = f"turbidez = {ecuacion_latex} + {intercept_prom:.4f}"
 
 from IPython.display import display, Math
 display(Math(ecuacion_latex))
