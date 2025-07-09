@@ -1160,11 +1160,11 @@ plt.show()
 
 # Entrenamiento de Modelos
 
+
 ## Combinación 1: Turbidez vs Bandas
 
 ### Modelo con B05
 
-$\text{Turbidez} = 1290.3786 \cdot B05 - 46.2658$
 
 ```{python}
 #| code-fold: true
@@ -1211,15 +1211,21 @@ rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 plt.figure(figsize=(8, 5))
 
 # Entrenamiento
-plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento")
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
 
 # Test
-plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo")
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo", marker='^')
 
 # Línea ideal
 min_val = min(np.min(y_train), np.min(y_test))
 max_val = max(np.max(y_train), np.max(y_test))
 plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
+
+# Línea de tendencia sobre test
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # [pendiente, intercepto]
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
 plt.xlabel("Turbidez real")
 plt.ylabel("Turbidez predicha")
@@ -1234,15 +1240,29 @@ plt.tight_layout()
 plt.show()
 
 # ------------------ Coeficientes ------------------ #
-print("\nEcuación promedio del modelo:")
-for var, coef in zip(variables, coef_prom):
-    print(f"  {var}: {coef:.4f}")
-print(f"Intercepto: {intercept_prom:.4f}")
+
+# Diccionario para renombrar las variables en notación matemática
+nombre_vars_latex = {
+    'B05': 'B05',
+    'B04': 'B04',
+    'B06': 'B06'
+}
+
+# Construir términos con nombres renombrados
+terminos_latex = [
+    f"{coef:.4f} \\cdot {nombre_vars_latex[var]}"
+    for var, coef in zip(variables, coef_prom)
+]
+
+# Construir la ecuación completa en LaTeX
+ecuacion_latex = " + ".join(terminos_latex)
+ecuacion_latex = f"\\ln(\\text{{turbidez}}) = {ecuacion_latex} + {intercept_prom:.4f}"
+
+from IPython.display import display, Math
+display(Math(ecuacion_latex))
 ```
 
 ### Modelo con 6 bandas
-
-$\text{Turbidez} = -199.0357 \cdot B05 + 4709.7174 \cdot B06 - 315.5704 \cdot B08 + 1692.5113 \cdot B07 - 706.0229 \cdot B04 - 4498.4379 \cdot B8A - 4.5705$
 
 
 ```{python}
@@ -1290,15 +1310,21 @@ rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 plt.figure(figsize=(8, 5))
 
 # Entrenamiento
-plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento")
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
 
 # Test
-plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo")
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo", marker='^')
 
 # Línea ideal
 min_val = min(np.min(y_train), np.min(y_test))
 max_val = max(np.max(y_train), np.max(y_test))
 plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
+
+# Línea de tendencia sobre test
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # [pendiente, intercepto]
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
 plt.xlabel("Turbidez real")
 plt.ylabel("Turbidez predicha")
@@ -1313,16 +1339,34 @@ plt.tight_layout()
 plt.show()
 
 # ------------------ Coeficientes ------------------ #
-print("\nEcuación promedio del modelo:")
-for var, coef in zip(variables, coef_prom):
-    print(f"  {var}: {coef:.4f}")
-print(f"Intercepto: {intercept_prom:.4f}")
+
+# Diccionario para renombrar las variables en notación matemática
+nombre_vars_latex = {
+    'B05': 'B05',
+    'B04': 'B04',
+    'B06': 'B06',
+    'B07': 'B07',
+    'B8A': 'B8A',
+    'B08': 'B08'
+}
+
+# Construir términos con nombres renombrados
+terminos_latex = [
+    f"{coef:.4f} \\cdot {nombre_vars_latex[var]}"
+    for var, coef in zip(variables, coef_prom)
+]
+
+# Construir la ecuación completa en LaTeX
+ecuacion_latex = " + ".join(terminos_latex)
+ecuacion_latex = f"\\ln(\\text{{turbidez}}) = {ecuacion_latex} + {intercept_prom:.4f}"
+
+from IPython.display import display, Math
+display(Math(ecuacion_latex))
 ```
 
 ## Modelos con logaritmo en turbidez y bandas
 ### Modelo con 1 variable (ln_B05)
 
-$\text{Turbidez} \approx e^{8.0315} \cdot B05^{1.7569}$
 
 ```{python}
 #| code-fold: true
@@ -1369,15 +1413,21 @@ rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 plt.figure(figsize=(8, 5))
 
 # Entrenamiento
-plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento")
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
 
 # Test
-plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo")
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo", marker='^')
 
 # Línea ideal
 min_val = min(np.min(y_train), np.min(y_test))
 max_val = max(np.max(y_train), np.max(y_test))
 plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
+
+# Línea de tendencia sobre test
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # [pendiente, intercepto]
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
 plt.xlabel("Turbidez real")
 plt.ylabel("Turbidez predicha")
@@ -1392,15 +1442,80 @@ plt.tight_layout()
 plt.show()
 
 # ------------------ Coeficientes ------------------ #
-print("\nEcuación promedio del modelo:")
-for var, coef in zip(variables, coef_prom):
-    print(f"  {var}: {coef:.4f}")
-print(f"Intercepto: {intercept_prom:.4f}")
+
+# Diccionario para renombrar las variables en notación matemática
+nombre_vars_latex = {
+    'ln_B05': 'ln(B05)',
+    'ln_B04': 'ln(B04)',
+    'ln_B06': 'ln(B06)'
+}
+
+# Construir términos con nombres renombrados
+terminos_latex = [
+    f"{coef:.4f} \\cdot {nombre_vars_latex[var]}"
+    for var, coef in zip(variables, coef_prom)
+]
+
+# Construir la ecuación completa en LaTeX
+ecuacion_latex = " + ".join(terminos_latex)
+ecuacion_latex = f"\\ln(\\text{{turbidez}}) = {ecuacion_latex} + {intercept_prom:.4f}"
+
+from IPython.display import display, Math
+display(Math(ecuacion_latex))
+```
+
+Escala real
+
+```{python}
+#| code-fold: true
+
+# Transformo a escala real
+
+y_train_pred_real = np.exp(y_train_pred)
+y_test_pred_real = np.exp(y_test_pred)
+
+y_train_real = np.exp(y_train)
+y_test_real = np.exp(y_test)
+
+rmse_test_real = np.sqrt(mean_squared_error(y_test_real, y_test_pred_real))
+r2_test_real = r2_score(y_test_real, y_test_pred_real)
+
+#Grafico
+
+plt.figure(figsize=(8, 5))
+
+# Entrenamiento (en escala real)
+plt.scatter(y_train_real, y_train_pred_real, color="#9D50A6", alpha=0.5, label="Entrenamiento")
+
+# Test (en escala real)
+plt.scatter(y_test_real, y_test_pred_real, color="red", alpha=0.7, label="Test")
+
+# Línea ideal
+min_val = min(y_train_real.min(), y_test_real.min())
+max_val = max(y_train_real.max(), y_test_real.max())
+plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
+
+# Línea de tendencia sobre test
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # [pendiente, intercepto]
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
+
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez predicha (NTU)")
+plt.title(
+    f"Regresión lineal en escala real\n"
+    f"R² testeo: {r2_test_real:.4f}, RMSE: {rmse_test_real:.4f} NTU"
+)
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
 ```
 
 ### Modelo con 3 variables
 
-Escala Logaritmica
+Escala Logarítmica
 
 ```{python}
 #| code-fold: true
@@ -1529,6 +1644,12 @@ min_val = min(y_train_real.min(), y_test_real.min())
 max_val = max(y_train_real.max(), y_test_real.max())
 plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
 
+# Línea de tendencia sobre test
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # [pendiente, intercepto]
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
+
 plt.xlabel("Turbidez real (NTU)")
 plt.ylabel("Turbidez predicha (NTU)")
 plt.title(
@@ -1540,6 +1661,8 @@ plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 ```
+
+
 # Procesamiento de productos satelitales
 
 Para el procesamiento se utilizará la librería *rasterio* en python.
