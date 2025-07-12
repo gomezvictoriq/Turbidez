@@ -1208,7 +1208,7 @@ r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
 # ------------------ Gráfico con estilo personalizado ------------------ #
-plt.figure(figsize=(8, 5))
+plt.figure(figsize=(5, 5))
 
 # Entrenamiento
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
@@ -1227,8 +1227,8 @@ x_tendencia = np.linspace(min_val, max_val, 100)
 y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
 plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
-plt.xlabel("Turbidez real")
-plt.ylabel("Turbidez predicha")
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
 plt.title(
     f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
     f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
@@ -1255,12 +1255,14 @@ terminos_latex = [
 ]
 
 # Construir la ecuación completa en LaTeX
-ecuacion_latex = " + ".join(terminos_latex)
-ecuacion_latex = f"turbidez = {ecuacion_latex} + {intercept_prom:.4f}"
+ecuacion_latexB05 = " + ".join(terminos_latex)
+ecuacion_latexB05 = f"turbidez = {ecuacion_latexB05} + {intercept_prom:.4f}"
 
 from IPython.display import display, Math
-display(Math(ecuacion_latex))
+display(Math(ecuacion_latexB05))
 ```
+
+
 
 ### Modelo con 6 bandas
 
@@ -1307,7 +1309,7 @@ r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
 # ------------------ Gráfico con estilo personalizado ------------------ #
-plt.figure(figsize=(8, 5))
+plt.figure(figsize=(5, 5))
 
 # Entrenamiento
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
@@ -1326,8 +1328,8 @@ x_tendencia = np.linspace(min_val, max_val, 100)
 y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
 plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
-plt.xlabel("Turbidez real")
-plt.ylabel("Turbidez predicha")
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
 plt.title(
     f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
     f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
@@ -1367,7 +1369,7 @@ display(Math(ecuacion_latex))
 ## Modelos con logaritmo en turbidez y bandas
 ### Modelo con 1 variable (ln_B05)
 
-
+**Escala logarítmica**
 ```{python}
 #| code-fold: true
 import pandas as pd
@@ -1410,7 +1412,7 @@ r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
 # ------------------ Gráfico con estilo personalizado ------------------ #
-plt.figure(figsize=(8, 5))
+plt.figure(figsize=(5, 5))
 
 # Entrenamiento
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
@@ -1429,8 +1431,8 @@ x_tendencia = np.linspace(min_val, max_val, 100)
 y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
 plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
-plt.xlabel("Turbidez real")
-plt.ylabel("Turbidez predicha")
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
 plt.title(
     f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
     f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
@@ -1464,7 +1466,7 @@ from IPython.display import display, Math
 display(Math(ecuacion_latex))
 ```
 
-Escala real
+**Escala real**
 
 ```{python}
 #| code-fold: true
@@ -1482,7 +1484,7 @@ r2_test_real = r2_score(y_test_real, y_test_pred_real)
 
 #Grafico
 
-plt.figure(figsize=(8, 5))
+plt.figure(figsize=(5, 5))
 
 # Entrenamiento (en escala real)
 plt.scatter(y_train_real, y_train_pred_real, color="#9D50A6", alpha=0.5, label="Entrenamiento")
@@ -1502,7 +1504,7 @@ y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
 plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
 plt.xlabel("Turbidez real (NTU)")
-plt.ylabel("Turbidez predicha (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
 plt.title(
     f"Regresión lineal en escala real\n"
     f"R² testeo: {r2_test_real:.4f}, RMSE: {rmse_test_real:.4f} NTU"
@@ -1515,7 +1517,7 @@ plt.show()
 
 ### Modelo con 3 variables
 
-Escala Logarítmica
+**Escala Logarítmica**
 
 ```{python}
 #| code-fold: true
@@ -1559,7 +1561,7 @@ r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
 # ------------------ Gráfico con estilo personalizado ------------------ #
-plt.figure(figsize=(8, 5))
+plt.figure(figsize=(5, 5))
 
 # Entrenamiento
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
@@ -1578,8 +1580,8 @@ x_tendencia = np.linspace(min_val, max_val, 100)
 y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
 plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
-plt.xlabel("Turbidez real")
-plt.ylabel("Turbidez predicha")
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
 plt.title(
     f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
     f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
@@ -1611,10 +1613,32 @@ ecuacion_latex = f"\\ln(\\text{{turbidez}}) = {ecuacion_latex} + {intercept_prom
 
 from IPython.display import display, Math
 display(Math(ecuacion_latex))
+
+# Ecuacion real guardada como string
+# Exponenciar el intercepto
+intercepto_escala_real = np.exp(intercept_prom)
+
+# Armar términos con potencias
+terminos_real = [
+    f"{var[3:]}^{{{coef:.4f}}}"  # Elimina "ln_" del nombre de la banda
+    for var, coef in zip(variables, coef_prom)
+]
+
+# Construir la ecuación en LaTeX como string reutilizable
+ecuacion_real_latex = f"\\text{{turbidez}} = {intercepto_escala_real:.4f} \\cdot " + " \\cdot ".join(terminos_real)
+
+# (Opcional) Mostrar
+from IPython.display import Math, display
+display(Math(ecuacion_real_latex))
+
+# Guardar en otra variable si querés reutilizar luego como string sin formato LaTeX
+ecuacion_turb = f"turbidez = {intercepto_escala_real:.4f} * " + " * ".join([
+    f"{var[3:]}^{coef:.4f}" for var, coef in zip(variables, coef_prom)
+])
+
 ```
 
-
-Escala Real
+**Escala Real**
 ```{python}
 #| code-fold: true
 
@@ -1631,7 +1655,7 @@ r2_test_real = r2_score(y_test_real, y_test_pred_real)
 
 #Grafico
 
-plt.figure(figsize=(8, 5))
+plt.figure(figsize=(5, 5))
 
 # Entrenamiento (en escala real)
 plt.scatter(y_train_real, y_train_pred_real, color="#9D50A6", alpha=0.5, label="Entrenamiento")
@@ -1651,7 +1675,7 @@ y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
 plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
 plt.xlabel("Turbidez real (NTU)")
-plt.ylabel("Turbidez predicha (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
 plt.title(
     f"Regresión lineal en escala real\n"
     f"R² testeo: {r2_test_real:.4f}, RMSE: {rmse_test_real:.4f} NTU"
@@ -1661,7 +1685,6 @@ plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 ```
-
 
 # Procesamiento de productos satelitales
 
@@ -1673,11 +1696,14 @@ Lectura de imágen raster y visualización del área de estudio.
 #| code-fold: true
 import rasterio as rs
 import matplotlib.pyplot as plt
+import numpy as np
 
 ruta = r"D:\GIT\Turbidez\recorte_acolite\2025-06-09.tif"
 
 # Abrir el archivo
 with rs.open(ruta) as raster:
+
+    #Definimos las bandas 
     #Bandas RGB para ver área de estudio
     B02 = raster.read(2) #Azul
     B03 = raster.read(3) #Verde
@@ -1707,14 +1733,12 @@ plt.title("Río Paraná")
 plt.show()
 ```
 
-
 Se utilizrá el índice NDWI para recortar la imágen satelital, y poder trabajar únicamente con los píxeles de agua.
 
 $NDWI=(B03-B11)/(B03+B11)$
 
 ```{python}
 #| code-fold: true
-
 import numpy as np
 
 ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
@@ -1724,14 +1748,116 @@ ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
 # Binarización: agua = 1, no agua = 0
 ndwi_bin = np.where(ndwi >= 0.6, 1, 0)
 
-# Mostrar imagen con coordenadas reales
+# Gráfico máscara de agua
 plt.imshow(ndwi_bin, cmap='Greys')
 plt.title("NDWI")
 plt.colorbar(label="Agua (1) / No Agua (0)")
 plt.show()
 ```
 
-Aplicamos la ecuacion hallada para ver la distribución de la turbidez en el río.
+## Modelo sin logaritmo con B05
+
+Aplicamos la ecuación hallada para ver la distribución de la turbidez en el río.
+
+```{python}
+#| code-fold: true
+import numpy as np
+import matplotlib.pyplot as plt
+import re
+
+# --- Ecuación como string ---
+ecuacion_latexB05 = "turbidez = 1290.3786 * B05 + 10.5"
+
+# --- Extraer coeficiente e intercepto ---
+match = re.match(r"turbidez\s*=\s*([-\d.]+)\s*\*\s*B05\s*([\+\-]\s*[\d.]+)", ecuacion_latexB05)
+coef_B05 = float(match.group(1))
+intercepto = float(match.group(2).replace(" ", ""))  # Quitar espacios en el intercepto
+
+# --- Calcular turbidez directamente ---
+turbidez = coef_B05 * B05 + intercepto
+
+# --- Aplicar máscara NDWI (solo donde hay agua) ---
+turbidez_agua = np.where(ndwi_bin == 1, turbidez, np.nan)
+
+# --- Calcular percentiles para ajustar visualización ---
+p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
+
+```
+
+**Mapa de turbidez**
+
+```{python}
+#| code-fold: true
+plt.figure(figsize=(5.5, 5.5))
+img = plt.imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
+plt.title("Turbidez 2025-06-09")
+plt.colorbar(img, label="Turbidez (NTU)")
+plt.axis("off")
+plt.tight_layout()
+plt.show()
+```
+
+
+## Modelo con logaritmo (B04, B05 ,B06)
+
+Aplicamos las ecuaciones halladas para ver la distribución de la turbidez en el río.
+
+```{python}
+#| code-fold: true
+import numpy as np
+import matplotlib.pyplot as plt
+import rasterio as rs
+import re
+
+# --- Ecuación dinámica como string ---
+ecuacion_turb = "turbidez = 822.8952 * B05^7.6903 * B04^-5.3331 * B06^-1.1797"
+
+# --- Extraer intercepto y coeficientes ---
+# Formato esperado: turbidez = intercepto * Bxx^coef * ...
+match = re.match(r"turbidez\s*=\s*([0-9.]+)\s*\*\s*(.+)", ecuacion_turb)
+intercepto = float(match.group(1))
+terminos = match.group(2)
+
+# Obtener variables y coeficientes
+patron = r"(B\d{2})\^(-?\d+\.\d+)"
+variables, coeficientes = zip(*re.findall(patron, terminos))
+coeficientes = np.array([float(c) for c in coeficientes])
+intercept_ln = np.log(intercepto)
+
+# --- Preparar diccionario de bandas ---
+bandas = {
+    "B04": np.clip(B04, 1e-3, None),
+    "B05": np.clip(B05, 1e-3, None),
+    "B06": np.clip(B06, 1e-3, None)
+}
+
+# --- Calcular ln(turbidez) con log(banda) * coef ---
+ln_turbidez = intercept_ln
+for var, coef in zip(variables, coeficientes):
+    ln_turbidez += coef * np.log(bandas[var])
+
+turbidez = np.exp(ln_turbidez)
+
+# --- Aplicar máscara NDWI ---
+turbidez_agua = np.where(ndwi_bin == 1, turbidez, np.nan)
+
+# --- Visualizar con escala entre percentil 5 y 95 ---
+p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
+#print(f"Visualización ajustada entre P5: {p5:.2f} y P95: {p95:.2f} NTU")
+```
+
+**Mapa de turbidez**
+
+```{python}
+#| code-fold: true
+plt.figure(figsize=(5.5, 5.5))
+img = plt.imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
+plt.title("Turbidez 2025-06-09")
+plt.colorbar(img, label="Turbidez (NTU)")
+plt.axis("off")
+plt.tight_layout()
+plt.show()
+```
 
 
 # Métodos de aprendizaje automático
