@@ -1690,6 +1690,23 @@ plt.show()
 
 Para el procesamiento se utilizará la librería *rasterio* en python.
 
+Tabla de referencia para seleccionar bandas en raterio
+
+| Nombre de banda en archivo .tif | Banda de Sentinel-2 | Número para la lectura en rasterio |
+|---------------------------------|---------------------|------------------------------------|
+| Banda 1                         | B01                 | 1                                  |
+| Banda 2                         | B02                 | 2                                  |
+| Banda 3                         | B03                 | 3                                  |
+| Banda 4                         | B04                 | 4                                  |
+| Banda 5                         | B05                 | 5                                  |
+| Banda 6                         | B06                 | 6                                  |
+| Banda 7                         | B07                 | 7                                  |
+| Banda 8                         | B08                 | 8                                  |
+| Banda 9                         | B8A                 | 9                                  |
+| Banda 10                        | B11                 | 10                                 |
+| Banda 11                        | B12                 | 11                                 |
+
+
 Lectura de imágen raster y visualización del área de estudio.
 
 ```{python}
