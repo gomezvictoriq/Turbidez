@@ -1217,7 +1217,7 @@ r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
 # ------------------ Gráfico con estilo personalizado ------------------ #
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(4.5, 4.5))
 
 # Entrenamiento
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
@@ -1316,7 +1316,7 @@ r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
 # ------------------ Gráfico con estilo personalizado ------------------ #
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(4.5, 4.5))
 
 # Entrenamiento
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
@@ -1419,7 +1419,7 @@ r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
 # ------------------ Gráfico con estilo personalizado ------------------ #
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(4.5, 4.5))
 
 # Entrenamiento
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
@@ -1491,7 +1491,7 @@ r2_test_real = r2_score(y_test_real, y_test_pred_real)
 
 #Grafico
 
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(4.5, 4.5))
 
 # Entrenamiento (en escala real)
 plt.scatter(y_train_real, y_train_pred_real, color="#9D50A6", alpha=0.5, label="Entrenamiento")
@@ -1568,7 +1568,7 @@ r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
 # ------------------ Gráfico con estilo personalizado ------------------ #
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(4.5, 4.5))
 
 # Entrenamiento
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
@@ -1662,7 +1662,7 @@ r2_test_real = r2_score(y_test_real, y_test_pred_real)
 
 #Grafico
 
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(4.5, 4.5))
 
 # Entrenamiento (en escala real)
 plt.scatter(y_train_real, y_train_pred_real, color="#9D50A6", alpha=0.5, label="Entrenamiento")
@@ -1749,8 +1749,11 @@ def stretch(banda):
 rgb_stretched = np.stack([stretch(B04), stretch(B03), stretch(B02)], axis=-1)
 
 # Gráfico
+plt.figure(figsize=(4.5, 4.5))
 plt.imshow(rgb_stretched)
 plt.title("Río Paraná")
+plt.axis("off")
+plt.tight_layout()
 plt.show()
 ```
 
@@ -1774,11 +1777,17 @@ umbral = threshold_otsu(ndwi[np.isfinite(ndwi)])  # descartamos NaN e inf
 ndwi_bin = np.where(ndwi >= umbral, 1, 0)
 
 # Gráfico máscara de agua
-plt.imshow(ndwi_bin, cmap='Greys')
-plt.title(f"NDWI - Otsu (umbral={umbral:.3f})")
-plt.colorbar(label="Agua (1) / No Agua (0)")
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+img = ax.imshow(ndwi_bin, cmap='Greys')
+ax.set_title(f"NDWI - Otsu (umbral={umbral:.3f})")
+cbar = fig.colorbar(img, ax=ax, fraction=0.046, pad=0.04)
+cbar.set_label("Agua (1) / No Agua (0)")
+ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+ax.axis("on")
+plt.tight_layout()
 plt.show()
 ```
+
 
 Luego del anális de las distantas pruebas de correlación con diferenctes bandas y combinaciones de ellas, optamos por tomar el modelo que utiliza la banda B05, para estimar la turbidez.
 
@@ -1808,15 +1817,24 @@ p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
 
 ```{python}
 #| code-fold: true
-plt.figure(figsize=(5.5, 5.5))
-img = plt.imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
-plt.title("Turbidez 2025-06-09")
-plt.colorbar(img, label="Turbidez (NTU)")
-plt.axis("off")
+import matplotlib.pyplot as plt
+
+# Crear figura
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+
+# Mostrar imagen con coordenadas reales
+img = ax.imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
+
+# Título y colorbar
+ax.set_title("Turbidez 2025-06-09")
+cbar = fig.colorbar(img, ax=ax, fraction=0.046, pad=0.04)
+cbar.set_label("Turbidez (NTU)")
+ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+ax.axis("on")
 plt.tight_layout()
 plt.show()
-```
 
+```
 
 **Para exportar tif**
 
@@ -1917,6 +1935,7 @@ for ruta in tifs:
     axes[0].axis("off")
     cbar1 = fig.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04)
     cbar1.set_label("Agua (1) / No Agua (0)")
+    
 
     # Panel 2: turbidez
     im2 = axes[1].imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
@@ -1925,9 +1944,9 @@ for ruta in tifs:
     cbar2 = fig.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
     cbar2.set_label("Turbidez (NTU)")
 
+
     plt.tight_layout()
     plt.show()
-
 
 ```
 
