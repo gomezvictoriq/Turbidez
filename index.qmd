@@ -1161,7 +1161,7 @@ plt.show()
 
 ## Modelos sin logaritmo (turb vs bandas)
 
-### Modelo con B05
+### Modelo con B05 {#modeloB05}
 
 
 ```{python}
@@ -1697,7 +1697,7 @@ plt.show()
 
 Para el procesamiento se utilizará la librería *rasterio* en python.
 
-Tabla de referencia para seleccionar bandas en raterio
+Tabla de referencia para seleccionar bandas en rasterio
 
 | Nombre de banda en archivo .tif | Banda de Sentinel-2 | Número para la lectura en rasterio |
 |---------------------------------|---------------------|------------------------------------|
@@ -1713,10 +1713,7 @@ Tabla de referencia para seleccionar bandas en raterio
 | Banda 10                        | B11                 | 10                                 |
 | Banda 11                        | B12                 | 11                                 |
 
-
-Lectura de imágen raster y visualización del área de estudio.
-
-Lectura de imágen raster y visualización del área de estudio.
+Lectura de imágen raster y visualización del área de estudio, con el objetivo de verificar que el código está funcionando y de que se leen correctamente los archivos.
 
 ```{python}
 #| code-fold: true
@@ -1740,9 +1737,7 @@ with rs.open(ruta) as raster:
 
     #para el modelo
     B05 = raster.read(5)
-    B06 = raster.read(6)
-    B07 = raster.read(7)
-
+    
 # Composión de imagen 
 rgb = np.stack([B04, B03, B02], axis=-1)
 
@@ -1785,7 +1780,7 @@ plt.colorbar(label="Agua (1) / No Agua (0)")
 plt.show()
 ```
 
-Luego del anális de las distantas pruebas de correlación con diferenctes bandas y combinaciones de ellas, optamos por tomar el modelo que utiliza la banda B05 para estimar la turbidez.
+Luego del anális de las distantas pruebas de correlación con diferenctes bandas y combinaciones de ellas, optamos por tomar el modelo que utiliza la banda B05, para estimar la turbidez.
 
 Aplicamos la ecuación hallada para ver la distribución de la turbidez en el río.
 
