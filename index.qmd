@@ -1163,7 +1163,6 @@ plt.show()
 
 ### Modelo con B05 {#modeloB05}
 
-
 ```{python}
 #| code-fold: true
 import pandas as pd
@@ -1878,7 +1877,7 @@ with rasterio.open(ruta_salida, "w", **perfil) as dst:
 ```
 
 
-# Lectura automática de tif y procesamiento para mapas de turbidez
+# Lectura automática de tif y procesamiento para mapas de turbidez, cálculo de umbral de mácara de agua con método Otsu
 
 ```{python}
 #| code-fold: true
@@ -1950,7 +1949,185 @@ for ruta in tifs:
 
 ```
 
+Como el método Otsu no puede procesar correctamente algunas imágenes, se decidió utilizar el valor promedio del NDWI para calcular el umbral.
 
+# Conclusión para modelos entrenados con métodos de regresion lineal clásicos
+
+Se seleccionará el mejor modelo lineal, este es el que utiliza la B05 de Sentinel-2 como variable predictora de la turbidez y será empleado para hacer la comparación con los métodos de aprendizaje automático próximamente. A continuación se resume la ecuación, métricas de desempeño y mapas de turbidez:
+
+Modelo con B05 y sus métricas
+
+```{python}
+#| code-fold: true
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from utils import run_bootstrap_linear_regression_analysis
+
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+
+# Variables predictoras
+variables = ['B05']
+X_completo = df[variables].values
+y_completo = df['turbidez'].values
+
+# Separar entrenamiento y testeo
+X_train, X_test, y_train, y_test = train_test_split(
+    X_completo, y_completo, test_size=0.25, random_state=42
+)
+
+# Ejecutar bootstrapping
+n_iteraciones_config = 1000
+coef_prom, intercept_prom, r2_train_boot, rmse_train_boot = \
+    run_bootstrap_linear_regression_analysis(X_train, y_train, n_iteraciones=n_iteraciones_config)
+
+# ------------------ Guardar coeficientes del modelo B05 ------------------ #
+coef_B05 = coef_prom[0]         # coeficiente de la banda B05
+intercept_B05 = intercept_prom  # intercepto
+
+# Ecuación en LaTeX (solo para mostrar)
+ecuacion_latexB05 = f"turbidez = {coef_B05:.4f} \\cdot B05 + {intercept_B05:.4f}"
+
+from IPython.display import display, Math
+display(Math(ecuacion_latexB05))
+
+
+# Modelo final con coeficientes promedio
+modelo_final_promedio = LinearRegression()
+modelo_final_promedio.coef_ = coef_prom
+modelo_final_promedio.intercept_ = intercept_prom
+
+# Predicción sobre entrenamiento y test
+y_train_pred = modelo_final_promedio.predict(X_train)
+y_test_pred = modelo_final_promedio.predict(X_test)
+
+# Métricas en testeo
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
+
+# ------------------ Gráfico con estilo personalizado ------------------ #
+plt.figure(figsize=(4.5, 4.5))
+
+# Entrenamiento
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5, label="Datos de entrenamiento", marker='o')
+
+# Test
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7, label="Datos de testeo", marker='^')
+
+# Línea ideal
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--', color="#17A77E", lw=2, label="Línea ideal")
+
+# Línea de tendencia sobre test
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # [pendiente, intercepto]
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
+
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
+plt.title(
+    f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
+    f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
+    f"R² testeo: {r2_test:.4f}, RMSE: {rmse_test:.4f}"
+)
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+
+# ------------------ Coeficientes ------------------ #
+
+# Diccionario para renombrar las variables en notación matemática
+nombre_vars_latex = {
+    'B05': 'B05'
+}
+
+# Construir términos con nombres renombrados
+terminos_latex = [
+    f"{coef:.4f} \\cdot {nombre_vars_latex[var]}"
+    for var, coef in zip(variables, coef_prom)
+]
+
+# Construir la ecuación completa en LaTeX
+ecuacion_latexB05 = " + ".join(terminos_latex)
+ecuacion_latexB05 = f"turbidez = {ecuacion_latexB05} + {intercept_prom:.4f}"
+
+display(Math(ecuacion_latexB05))
+
+```
+
+Mapas de turbidez 
+```{python}
+#| code-fold: true
+import rasterio as rs
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+import os
+from skimage.filters import threshold_otsu
+
+
+# Carpeta con archivos .tif
+carpeta = r"D:\GIT\Turbidez\recorte_acolite"
+
+# Buscar todos los .tif
+tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
+print(f"Se encontraron {len(tifs)} archivos .tif")
+
+for ruta in tifs:
+    nombre = os.path.basename(ruta)
+    fecha = os.path.splitext(nombre)[0]   # nombre sin extensión
+    print(f"\nProcesando: {nombre}")
+
+    with rs.open(ruta) as raster:
+        # Bandas necesarias
+        B03 = raster.read(3).astype(np.float32)  # Verde
+        B05 = raster.read(5).astype(np.float32)  # RedEdge (para ecuación turbidez)
+        B11 = raster.read(10).astype(np.float32) # SWIR
+
+    # --- NDWI ---
+    ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
+
+    # Calcular el promedio (ignorando NaN si hay)
+    umbral = np.nanmean(ndwi)
+
+    # Binarizar con la media
+    mascara = (ndwi > umbral).astype(np.uint8)
+
+    # --- Turbidez ---
+    turbidez = coef_B05 * B05 + intercept_B05
+    turbidez = np.clip(turbidez, 0, None)  # negativos a 0
+    turbidez_agua = np.where(mascara == 1, turbidez, np.nan)
+
+    # --- Calcular percentiles para ajustar visualización ---
+    p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
+
+    # --- Gráfico conjunto ---
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4.5))
+
+    # Panel 1: máscara de agua
+    im1 = axes[0].imshow(mascara, cmap="Greys")
+    axes[0].set_title(f"Máscara de agua - {fecha}")
+    axes[0].axis("off")
+    cbar1 = fig.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04)
+    cbar1.set_label("Agua (1) / No Agua (0)")
+
+    # Panel 2: turbidez
+    im2 = axes[1].imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
+    axes[1].set_title(f"Turbidez - {fecha}")
+    axes[1].axis("off")
+    cbar2 = fig.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
+    cbar2.set_label("Turbidez (NTU)")
+
+    plt.tight_layout()
+    plt.show()
+```
 
 # Métodos de aprendizaje automático
 
