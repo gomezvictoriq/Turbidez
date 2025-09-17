@@ -2360,15 +2360,16 @@ import matplotlib.pyplot as plt
 import glob
 import os
 from skimage.filters import threshold_otsu
-import joblib  # para cargar modelo XGBoost si lo guardaste
+import pandas as pd
 
 # --- Configuración ---
 carpeta = r"D:\GIT\Turbidez\recorte_acolite"
 salida = os.path.join(carpeta, "turbidez_out_XBOOST")
 os.makedirs(salida, exist_ok=True)
 
-# Cargar modelo XGBoost entrenado
-# model = joblib.load("ruta_modelo_XGBoost.joblib")  # si lo guardaste previamente
+# Definir nombres de features (idénticos a entrenamiento)
+feature_names = ["B01", "B02", "B03", "B04", "B05",
+                 "B06", "B07", "B08", "B11", "B12", "B8A"]
 
 # Buscar todos los .tif
 tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
@@ -2380,7 +2381,7 @@ for ruta in tifs:
     print(f"\nProcesando: {nombre}")
 
     with rs.open(ruta) as raster:
-        # Leer todas las bandas que usaste en entrenamiento
+        # Leer bandas
         B01 = raster.read(1).astype(np.float32)
         B02 = raster.read(2).astype(np.float32)
         B03 = raster.read(3).astype(np.float32)
@@ -2389,10 +2390,10 @@ for ruta in tifs:
         B06 = raster.read(6).astype(np.float32)
         B07 = raster.read(7).astype(np.float32)
         B08 = raster.read(8).astype(np.float32)
+        B8A = raster.read(9).astype(np.float32)
         B11 = raster.read(10).astype(np.float32)
         B12 = raster.read(11).astype(np.float32)
-        B8A = raster.read(9).astype(np.float32)
-          # depende del orden de tu TIF
+
         perfil = raster.profile
 
     # --- NDWI y máscara de agua ---
@@ -2400,13 +2401,17 @@ for ruta in tifs:
     umbral = np.nanmean(ndwi)
     mascara = (ndwi > umbral).astype(np.uint8)
 
-    # --- Crear array de features para XGBoost ---
+    # --- Crear array de features ---
     filas, cols = B03.shape
-    X_img = np.stack([B01, B02, B03, B04, B05, B06, B07, B08, B11, B12, B8A], axis=-1)
-    X_img_2d = X_img.reshape(-1, X_img.shape[-1])  # aplanar para el modelo
+    X_img = np.stack([B01, B02, B03, B04, B05,
+                      B06, B07, B08, B11, B12, B8A], axis=-1)
+    X_img_2d = X_img.reshape(-1, X_img.shape[-1])
+
+    # Convertir a DataFrame con nombres de columnas iguales al entrenamiento
+    X_img_2d_df = pd.DataFrame(X_img_2d, columns=feature_names)
 
     # --- Predecir turbidez ---
-    turbidez_pred = model.predict(X_img_2d)
+    turbidez_pred = model.predict(X_img_2d_df)
     turbidez_pred = turbidez_pred.reshape(filas, cols)
 
     # Aplicar máscara de agua
@@ -2437,6 +2442,7 @@ for ruta in tifs:
 
     plt.tight_layout()
     plt.show()
+
 
 
 ```
