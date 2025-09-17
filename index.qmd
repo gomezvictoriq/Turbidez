@@ -2063,6 +2063,7 @@ display(Math(ecuacion_latexB05))
 ```
 
 Mapas de turbidez 
+
 ```{python}
 #| code-fold: true
 import rasterio as rs
@@ -2072,9 +2073,12 @@ import glob
 import os
 from skimage.filters import threshold_otsu
 
-
 # Carpeta con archivos .tif
 carpeta = r"D:\GIT\Turbidez\recorte_acolite"
+salida = os.path.join(carpeta, "turbidez_out")  # subcarpeta para salidas
+
+# Crear carpeta si no existe
+os.makedirs(salida, exist_ok=True)
 
 # Buscar todos los .tif
 tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
@@ -2088,8 +2092,11 @@ for ruta in tifs:
     with rs.open(ruta) as raster:
         # Bandas necesarias
         B03 = raster.read(3).astype(np.float32)  # Verde
-        B05 = raster.read(5).astype(np.float32)  # RedEdge (para ecuación turbidez)
+        B05 = raster.read(5).astype(np.float32)  # RedEdge
         B11 = raster.read(10).astype(np.float32) # SWIR
+
+        # Guardar perfil original
+        perfil = raster.profile
 
     # --- NDWI ---
     ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
@@ -2104,6 +2111,20 @@ for ruta in tifs:
     turbidez = coef_B05 * B05 + intercept_B05
     turbidez = np.clip(turbidez, 0, None)  # negativos a 0
     turbidez_agua = np.where(mascara == 1, turbidez, np.nan)
+
+    # --- Exportar a GeoTIFF ---
+    salida_tif = os.path.join(salida, f"turbidez_{fecha}.tif")
+
+    perfil.update(
+        dtype=rs.float32,
+        count=1,  # solo una banda (turbidez)
+        compress='lzw',
+        nodata=np.nan
+    )
+
+    with rs.open(salida_tif, 'w', **perfil) as dst:
+        dst.write(turbidez_agua.astype(np.float32), 1)
+
 
     # --- Calcular percentiles para ajustar visualización ---
     p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
@@ -2127,8 +2148,297 @@ for ruta in tifs:
 
     plt.tight_layout()
     plt.show()
+
 ```
 
 # Métodos de aprendizaje automático
+
+Prueba con modelo XGBoost
+
+```{python}
+#| code-fold: true
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error
+import pandas as pd
+import numpy as np
+
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+
+# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
+X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
+y = df["turbidez"]
+
+# Dividir en train/test
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42)
+
+# Modelo XGBoost
+model = XGBRegressor(
+    n_estimators=500,
+    learning_rate=0.05,
+    max_depth=6,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    random_state=42)
+
+# Entrenar
+model.fit(X_train, y_train)
+
+# --- Predicciones ---
+y_train_pred = model.predict(X_train)
+y_test_pred = model.predict(X_test)
+
+# --- Métricas entrenamiento ---
+r2_train = r2_score(y_train, y_train_pred)
+rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
+
+# --- Métricas testeo ---
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
+
+# --- Print resultados ---
+print("=== Resultados Entrenamiento ===")
+print(f"R² train: {r2_train:.3f}")
+print(f"RMSE train: {rmse_train:.3f}")
+
+print("\n=== Resultados Testeo ===")
+print(f"R² test: {r2_test:.3f}")
+print(f"RMSE test: {rmse_test:.3f}")
+
+# Gráfico estimado vs real
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.figure(figsize=(4.5, 4.5))
+
+# --- Puntos entrenamiento ---
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
+            label="Datos de entrenamiento", marker='o')
+
+# --- Puntos test ---
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
+            label="Datos de testeo", marker='^')
+
+# --- Línea ideal 1:1 ---
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--',
+         color="#17A77E", lw=2, label="Línea ideal")
+
+# --- Línea de tendencia sobre test ---
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black',
+         lw=2, label="Línea de tendencia (test)")
+
+# --- Etiquetas ---
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
+
+plt.title(
+    f"Modelo XGBoost\n"
+    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
+    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
+)
+
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+
+```
+
+
+Prueba con modelo Ramdon Forest
+
+```{python}
+#| code-fold: true
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+
+# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
+X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
+y = df["turbidez"]
+
+# Dividir en train/test
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42
+)
+
+# Modelo Random Forest
+model = RandomForestRegressor(
+    n_estimators=500,      # cantidad de árboles
+    max_depth=None,        # profundidad ilimitada (se ajusta sola)
+    max_features="sqrt",   # cantidad de variables por split
+    bootstrap=True,        # usa bootstrapping
+    random_state=42,
+    n_jobs=-1              # usa todos los núcleos de CPU
+)
+
+# Entrenar
+model.fit(X_train, y_train)
+
+# --- Predicciones ---
+y_train_pred = model.predict(X_train)
+y_test_pred = model.predict(X_test)
+
+# --- Métricas entrenamiento ---
+r2_train = r2_score(y_train, y_train_pred)
+rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
+
+# --- Métricas testeo ---
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
+
+# --- Print resultados ---
+print("=== Resultados Entrenamiento ===")
+print(f"R² train: {r2_train:.3f}")
+print(f"RMSE train: {rmse_train:.3f}")
+
+print("\n=== Resultados Testeo ===")
+print(f"R² test: {r2_test:.3f}")
+print(f"RMSE test: {rmse_test:.3f}")
+
+# --- Gráfico estimado vs real ---
+plt.figure(figsize=(4.5, 4.5))
+
+# --- Puntos entrenamiento ---
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
+            label="Datos de entrenamiento", marker='o')
+
+# --- Puntos test ---
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
+            label="Datos de testeo", marker='^')
+
+# --- Línea ideal 1:1 ---
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--',
+         color="#17A77E", lw=2, label="Línea ideal")
+
+# --- Línea de tendencia sobre test ---
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
+x_tendencia = np.linspace(min_val, max_val, 100)  # CORREGIDO
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black',
+         lw=2, label="Línea de tendencia (test)")
+
+# --- Etiquetas y título ---
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
+plt.title(
+    f"Modelo Random Forest\n"
+    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
+    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
+)
+
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+```
+
+# Mapas con XGBoost
+
+```{python}
+
+#| code-fold: true
+import rasterio as rs
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+import os
+from skimage.filters import threshold_otsu
+import joblib  # para cargar modelo XGBoost si lo guardaste
+
+# --- Configuración ---
+carpeta = r"D:\GIT\Turbidez\recorte_acolite"
+salida = os.path.join(carpeta, "turbidez_out_XBOOST")
+os.makedirs(salida, exist_ok=True)
+
+# Cargar modelo XGBoost entrenado
+# model = joblib.load("ruta_modelo_XGBoost.joblib")  # si lo guardaste previamente
+
+# Buscar todos los .tif
+tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
+print(f"Se encontraron {len(tifs)} archivos .tif")
+
+for ruta in tifs:
+    nombre = os.path.basename(ruta)
+    fecha = os.path.splitext(nombre)[0]
+    print(f"\nProcesando: {nombre}")
+
+    with rs.open(ruta) as raster:
+        # Leer todas las bandas que usaste en entrenamiento
+        B01 = raster.read(1).astype(np.float32)
+        B02 = raster.read(2).astype(np.float32)
+        B03 = raster.read(3).astype(np.float32)
+        B04 = raster.read(4).astype(np.float32)
+        B05 = raster.read(5).astype(np.float32)
+        B06 = raster.read(6).astype(np.float32)
+        B07 = raster.read(7).astype(np.float32)
+        B08 = raster.read(8).astype(np.float32)
+        B11 = raster.read(10).astype(np.float32)
+        B12 = raster.read(11).astype(np.float32)
+        B8A = raster.read(9).astype(np.float32)
+          # depende del orden de tu TIF
+        perfil = raster.profile
+
+    # --- NDWI y máscara de agua ---
+    ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
+    umbral = np.nanmean(ndwi)
+    mascara = (ndwi > umbral).astype(np.uint8)
+
+    # --- Crear array de features para XGBoost ---
+    filas, cols = B03.shape
+    X_img = np.stack([B01, B02, B03, B04, B05, B06, B07, B08, B11, B12, B8A], axis=-1)
+    X_img_2d = X_img.reshape(-1, X_img.shape[-1])  # aplanar para el modelo
+
+    # --- Predecir turbidez ---
+    turbidez_pred = model.predict(X_img_2d)
+    turbidez_pred = turbidez_pred.reshape(filas, cols)
+
+    # Aplicar máscara de agua
+    turbidez_agua = np.where(mascara == 1, turbidez_pred, np.nan)
+
+    # --- Exportar a GeoTIFF ---
+    salida_tif = os.path.join(salida, f"turbidez_{fecha}.tif")
+    perfil.update(dtype=rs.float32, count=1, compress='lzw', nodata=np.nan)
+    with rs.open(salida_tif, 'w', **perfil) as dst:
+        dst.write(turbidez_agua.astype(np.float32), 1)
+
+    # --- Percentiles para visualización ---
+    p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
+
+    # --- Gráfico ---
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4.5))
+    im1 = axes[0].imshow(mascara, cmap="Greys")
+    axes[0].set_title(f"Máscara de agua - {fecha}")
+    axes[0].axis("off")
+    cbar1 = fig.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04)
+    cbar1.set_label("Agua (1) / No Agua (0)")
+
+    im2 = axes[1].imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
+    axes[1].set_title(f"Turbidez (XGBoost) - {fecha}")
+    axes[1].axis("off")
+    cbar2 = fig.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
+    cbar2.set_label("Turbidez (NTU)")
+
+    plt.tight_layout()
+    plt.show()
+
+
+```
 
 Proximamente...
