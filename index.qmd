@@ -2151,9 +2151,7 @@ for ruta in tifs:
 
 ```
 
-# Métodos de aprendizaje automático
-
-Prueba con modelo XGBoost
+# Método de aprendizaje automático XGBoost
 
 ```{python}
 #| code-fold: true
@@ -2252,107 +2250,9 @@ plt.show()
 
 ```
 
-
-Prueba con modelo Ramdon Forest
-
-```{python}
-#| code-fold: true
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
-
-# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
-X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
-y = df["turbidez"]
-
-# Dividir en train/test
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, random_state=42
-)
-
-# Modelo Random Forest
-model = RandomForestRegressor(
-    n_estimators=500,      # cantidad de árboles
-    max_depth=None,        # profundidad ilimitada (se ajusta sola)
-    max_features="sqrt",   # cantidad de variables por split
-    bootstrap=True,        # usa bootstrapping
-    random_state=42,
-    n_jobs=-1              # usa todos los núcleos de CPU
-)
-
-# Entrenar
-model.fit(X_train, y_train)
-
-# --- Predicciones ---
-y_train_pred = model.predict(X_train)
-y_test_pred = model.predict(X_test)
-
-# --- Métricas entrenamiento ---
-r2_train = r2_score(y_train, y_train_pred)
-rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
-
-# --- Métricas testeo ---
-r2_test = r2_score(y_test, y_test_pred)
-rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
-
-# --- Print resultados ---
-print("=== Resultados Entrenamiento ===")
-print(f"R² train: {r2_train:.3f}")
-print(f"RMSE train: {rmse_train:.3f}")
-
-print("\n=== Resultados Testeo ===")
-print(f"R² test: {r2_test:.3f}")
-print(f"RMSE test: {rmse_test:.3f}")
-
-# --- Gráfico estimado vs real ---
-plt.figure(figsize=(4.5, 4.5))
-
-# --- Puntos entrenamiento ---
-plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
-            label="Datos de entrenamiento", marker='o')
-
-# --- Puntos test ---
-plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
-            label="Datos de testeo", marker='^')
-
-# --- Línea ideal 1:1 ---
-min_val = min(np.min(y_train), np.min(y_test))
-max_val = max(np.max(y_train), np.max(y_test))
-plt.plot([min_val, max_val], [min_val, max_val], '--',
-         color="#17A77E", lw=2, label="Línea ideal")
-
-# --- Línea de tendencia sobre test ---
-coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
-x_tendencia = np.linspace(min_val, max_val, 100)  # CORREGIDO
-y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
-plt.plot(x_tendencia, y_tendencia, '-', color='black',
-         lw=2, label="Línea de tendencia (test)")
-
-# --- Etiquetas y título ---
-plt.xlabel("Turbidez real (NTU)")
-plt.ylabel("Turbidez estimada (NTU)")
-plt.title(
-    f"Modelo Random Forest\n"
-    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
-    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
-)
-
-plt.legend()
-plt.grid(True, linestyle='--', alpha=0.5)
-plt.tight_layout()
-plt.show()
-```
-
-# Mapas con XGBoost
+## Mapas con XGBoost
 
 ```{python}
-
 #| code-fold: true
 import rasterio as rs
 import numpy as np
@@ -2443,8 +2343,574 @@ for ruta in tifs:
     plt.tight_layout()
     plt.show()
 
+```
 
+
+## Hiperparámetros utilizados
+
+• n_estimators=500 → número de arboles que se entrenan secuencialmente
+
+• learning_rate=0.05 → indica que tanta aprende cada arbol
+
+Es el “paso” con que el modelo corrige los errores.
+-Valores bajos (0.01–0.1) → aprendizaje más lento pero más estable.
+-Valores altos (>0.3) → puede sobreajustar rápido.
+
+• max_depth=6 → Profundidad máxima de cada árbol.
+
+Controla la complejidad de las interacciones entre las variables (bandas).
+Más profundo → aprende patrones complejos, pero también ruido.
+
+• subsample=0.8 → Fracción de los datos usados para entrenar cada árbol.
+
+Introduce aleatoriedad. Ayuda a reducir el sobreajuste, 0.8 significa que cada árbol usa el 80% de las filas del dataset.
+
+• colsample_bytree=0.8 → Fracción de las variables (columnas) usadas para cada árbol. Igual que subsample, pero sobre las bandas.
+
+Esto fuerza a los árboles a usar combinaciones distintas de bandas, lo que mejora la generalización.
+
+0.8 = buena práctica para evitar que el modelo dependa demasiado de una sola banda.
+
+Los hiperparámetros controlan el comportamiento del modelo, pero no se aprenden automáticamente del conjunto de datos.
+Por eso, necesitamos un método que busque las mejores combinaciones posibles para obtener el máximo rendimiento sin sobreajustar.
+
+## Optimización de hiperparámetros
+
+Existen muchos métodos de optimizacion de hiperparámetros
+
+1. **Grid Search (búsqueda en rejilla)**
+
+Prueba todas las combinaciones posibles de los valores que uno defina.
+
+Por ejemplo, si se prueba 3 valores de max_depth y 3 de learning_rate, va a entrenar 3 × 3 = 9 modelos.
+
+Usa validación cruzada (cross-validation) para evaluar cada combinación.
+
+*Ventajas*
+
+  • Simple, exhaustivo y fácil de entender.
+
+  • Ideal cuando el número de combinaciones es pequeño.
+
+*Desventajas*
+
+  • Muy lento si probás muchos parámetros o valores.
+
+  • No aprende de los resultados anteriores (prueba todo a ciegas).
+
+2. **Random Search (búsqueda aleatoria)**
+
+En lugar de probar todas las combinaciones, elige al azar un número fijo de combinaciones.
+
+Ejemplo: podrías probar 30 combinaciones elegidas aleatoriamente de un rango mucho más grande.
+
+ *Ventajas*
+
+  • Mucho más rápido que Grid Search.
+
+  • Puede explorar un espacio grande de parámetros.
+
+  • Buen punto medio entre precisión y costo computacional.
+
+ *Desventajas*
+
+  • Resultados algo aleatorios (aunque reproducibles con random_state).
+
+  • No garantiza probar la “mejor” combinación posible.
+
+3. **Búsqueda bayesiana inteligente (Optuna / Hyperopt / scikit-optimize)**
+
+Usa inteligencia adaptativa: aprende de las pruebas anteriores y dirige las siguientes pruebas hacia las regiones más prometedoras.
+
+Es una búsqueda inteligente, no aleatoria ni exhaustiva.
+
+ *Ventajas*
+
+ • Mucho más eficiente que Grid o Random Search.
+
+ • Encuentra buenos resultados con menos intentos.
+
+ • Ideal para modelos complejos como XGBoost.
+
+ *Desventajas*
+
+ • Requiere instalar librerías externas (como optuna).
+
+ • Más técnica, aunque muy potente.
+
+## Modelo XGBoost optimizado con Grid Search (Búsqueda por cuadrícula)
+
+```{python}
+#| code-fold: true
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error
+import pandas as pd
+import numpy as np
+
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+
+# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
+X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
+y = df["turbidez"]
+
+# Dividir en train/test
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42)
+
+# --- OPTIMIZACIÓN DE HIPERPARÁMETROS CON GRID SEARCH ---
+
+from sklearn.model_selection import GridSearchCV
+from xgboost import XGBRegressor
+
+# Definimos las combinaciones a probar
+param_grid = {
+    'max_depth': [4, 6, 8],
+    'learning_rate': [0.01, 0.05, 0.1],
+    'subsample': [0.7, 0.8, 1.0],
+    'colsample_bytree': [0.7, 0.8, 1.0],
+    'n_estimators': [300, 500, 700]
+}
+
+# Modelo base
+xgb_model = XGBRegressor(random_state=42)
+
+# Configuración del GridSearch
+grid_search = GridSearchCV(
+    estimator=xgb_model,
+    param_grid=param_grid,
+    scoring='r2',
+    cv=5,           # validación cruzada con 5 particiones
+    verbose=0,
+    n_jobs=1       )
+
+# Entrenamos el GridSearch
+
+grid_search.fit(X_train, y_train)
+
+# Mostramos los mejores parámetros y resultados
+print("\n=== RESULTADOS GRID SEARCH ===")
+print("Mejores parámetros encontrados:")
+import pandas as pd
+from IPython.display import display
+
+# Convertir los mejores parámetros en DataFrame
+best_params_df = pd.DataFrame([grid_search.best_params_])
+
+# Mostrar tabla
+display(best_params_df)
+
+# Guardamos el mejor modelo
+model = grid_search.best_estimator_
+
+# Entrenamos nuevamente con los mejores parámetros (opcional)
+model.fit(X_train, y_train)
+
+# --- Predicciones ---
+y_train_pred = model.predict(X_train)
+y_test_pred = model.predict(X_test)
+
+# --- Métricas entrenamiento ---
+r2_train = r2_score(y_train, y_train_pred)
+rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
+
+# --- Métricas testeo ---
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
+
+# --- Print resultados ---
+print("=== Resultados Entrenamiento ===")
+print(f"R² train: {r2_train:.3f}")
+print(f"RMSE train: {rmse_train:.3f}")
+
+print("\n=== Resultados Testeo ===")
+print(f"R² test: {r2_test:.3f}")
+print(f"RMSE test: {rmse_test:.3f}")
+
+# Gráfico estimado vs real
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.figure(figsize=(4.5, 4.5))
+
+# --- Puntos entrenamiento ---
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
+            label="Datos de entrenamiento", marker='o')
+
+# --- Puntos test ---
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
+            label="Datos de testeo", marker='^')
+
+# --- Línea ideal 1:1 ---
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--',
+         color="#17A77E", lw=2, label="Línea ideal")
+
+# --- Línea de tendencia sobre test ---
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black',
+         lw=2, label="Línea de tendencia (test)")
+
+# --- Etiquetas ---
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
+
+plt.title(
+    f"Modelo XGBoost (Optimizado con Grid Searh)\n"
+    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
+    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
+)
+
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+```
+
+## Modelo XGBoost optimizado con Optuna (Búsqueda bayesiana inteligente)
+
+```{python}
+#| code-fold: true
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error
+import pandas as pd
+import numpy as np
+
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+
+# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
+X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
+y = df["turbidez"]
+
+# Dividir en train/test
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42)
+
+# --- OPTIMIZACIÓN DE HIPERPARÁMETROS CON OPTUNA ---
+
+import optuna
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+from xgboost import XGBRegressor
+from sklearn.model_selection import cross_val_score
+
+def objective(trial):
+    # Espacio de búsqueda de hiperparámetros
+    params = {
+        'max_depth': trial.suggest_int('max_depth', 3, 10),
+        'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3),
+        'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+        'n_estimators': trial.suggest_int('n_estimators', 200, 800),
+        'random_state': 42
+    }
+
+    # Modelo con los parámetros actuales
+    model = XGBRegressor(**params)
+
+    # Validación cruzada de 5 particiones
+    score = cross_val_score(model, X_train, y_train, scoring='r2', cv=5).mean()
+    return score
+
+# Crear estudio de optimización
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=50, show_progress_bar=True)
+
+# Mostrar resultados
+print("\n=== RESULTADOS OPTUNA ===")
+print("Mejores parámetros encontrados:")
+import pandas as pd
+from IPython.display import display
+
+# Convertir los mejores parámetros a DataFrame
+best_params_df = pd.DataFrame([study.best_params])
+
+# Agregar la métrica objetivo (R²)
+best_params_df["R2_promedio_CV"] = study.best_value
+
+# Mostrar tabla
+display(best_params_df)
+
+
+
+
+
+# Entrenar el modelo final con los mejores parámetros
+model = XGBRegressor(**study.best_params)
+model.fit(X_train, y_train)
+
+
+# --- Predicciones ---
+y_train_pred = model.predict(X_train)
+y_test_pred = model.predict(X_test)
+
+# --- Métricas entrenamiento ---
+r2_train = r2_score(y_train, y_train_pred)
+rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
+
+# --- Métricas testeo ---
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
+
+# --- Print resultados ---
+print("=== Resultados Entrenamiento ===")
+print(f"R² train: {r2_train:.3f}")
+print(f"RMSE train: {rmse_train:.3f}")
+
+print("\n=== Resultados Testeo ===")
+print(f"R² test: {r2_test:.3f}")
+print(f"RMSE test: {rmse_test:.3f}")
+
+# Gráfico estimado vs real
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.figure(figsize=(4.5, 4.5))
+
+# --- Puntos entrenamiento ---
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
+            label="Datos de entrenamiento", marker='o')
+
+# --- Puntos test ---
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
+            label="Datos de testeo", marker='^')
+
+# --- Línea ideal 1:1 ---
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--',
+         color="#17A77E", lw=2, label="Línea ideal")
+
+# --- Línea de tendencia sobre test ---
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black',
+         lw=2, label="Línea de tendencia (test)")
+
+# --- Etiquetas ---
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
+
+plt.title(
+    f"Modelo XGBoost (Optimizado con Optuna)\n"
+    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
+    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
+)
+
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
 
 ```
 
-Proximamente...
+## Relevancia de Bandas espectrales en el modelo XGBOOST
+
+La importancia de las bandas indica cuánto contribuye cada banda espectral (o combinación de ellas) al rendimiento del modelo.
+Esto permite saber cuáles longitudes de onda son más informativas para estimar la variable objetivo.
+
+Interpretación:
+
+Cuanto mayor sea la importancia, más influye esa banda en las divisiones del modelo.
+
+No necesariamente significa correlación directa (puede ser no lineal).
+
+Si una banda tiene muy baja importancia (≈0), puede eliminarse en futuras versiones del modelo para simplificarlo.
+
+Cuando entrenás un modelo como XGBoost, el algoritmo aprende qué variables (bandas espectrales) son más útiles para predecir la turbidez.
+
+• La importancia de las bandas indica cuánto aportó cada banda al modelo para mejorar sus predicciones.
+
+En XGBoost, el atributo model.feature_importances_ mide la importancia promedio de cada variable dentro de todos los árboles del modelo.
+
+XGBoost da la importancia relativa (no absoluta ni porcentual) basada en "weight".
+Los valores se normalizan para que la suma de todos sea 1.0.
+
+
+| Tipo de importancia (`importance_type`) | Qué mide exactamente                                           | Interpretación práctica                       |
+| --------------------------------------- | -------------------------------------------------------------- | --------------------------------------------- |
+| `"weight"` *(por defecto)*              | Número de veces que la variable fue usada para dividir nodos   | Bandas usadas más veces para tomar decisiones |
+| `"gain"`                                | Promedio de la mejora en la predicción al usar esa banda       | Cuánto “valor” aporta cada vez que se usa     |
+| `"cover"`                               | Promedio de la cantidad de datos afectados por esas divisiones | Qué tan general es su influencia              |
+| `"total_gain"` o `"total_cover"`        | Suma total de las métricas anteriores                          | Importancia acumulada 
+
+**Bandas de Sentinel-2**
+
+![Bandas de Sentinel-2](D:\GIT\Turbidez\img\Bandas-satélite-imágenes-Sentinel-2.jpg){fig-align="center"}
+
+**Importancia de cada banda dentro del modelo XGBoost**
+
+```{python}
+#| code-fold: true
+# === IMPORTANCIA DE BANDAS (Feature Importances) ===
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Obtener importancias del modelo entrenado
+importancias = model.feature_importances_
+
+# Crear DataFrame ordenado
+importancia_df = pd.DataFrame({
+    'Banda': X.columns,
+    'Importancia': importancias
+}).sort_values(by='Importancia', ascending=False)
+
+display(importancia_df)
+
+# Gráfico de barras ordenado
+plt.figure(figsize=(8, 4))
+plt.bar(importancia_df['Banda'], importancia_df['Importancia'], color='#2E86AB')
+plt.title('Importancia de las bandas en el modelo XGBoost')
+plt.xlabel('Banda')
+plt.ylabel('Importancia relativa')
+plt.xticks(rotation=45)
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+
+```
+
+B05 explica la mayor parte del poder predictivo total del modelo.
+
+Las bandas con valores cercanos a cero aportan muy poca información o son redundantes con otras.
+
+Las bandas Red Edge (B05–B06-B07) se ubican justo en la transición entre el rojo y el infrarrojo cercano, donde la reflectancia del agua cambia mucho con la concentración de sedimentos.
+→ Son excelentes indicadores de turbidez o material particulado suspendido.
+
+Las bandas azules (B01–B02) todavía aportan algo, porque la turbidez afecta la dispersión del azul.
+→ En aguas claras, el azul predomina; en aguas turbias, se atenúa.
+
+Las bandas SWIR (B11, B12) y el rojo visible (B04) no aportan casi nada, ya que esas longitudes de onda no penetran el agua y son más útiles para suelo o vegetación.
+
+
+## Mapas XGBOOST con hiperparámetros optimizados
+
+```{python}
+#| code-fold: true
+#| message: false
+#| warning: false
+
+import rasterio as rs
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+import os
+import pandas as pd
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import r2_score, mean_squared_error
+import optuna
+from skimage.filters import threshold_otsu
+
+# --- CONFIGURACIÓN ---
+carpeta = r"D:\GIT\Turbidez\recorte_acolite"
+salida = os.path.join(carpeta, "turbidez_out_XGBOOST_optuna")
+os.makedirs(salida, exist_ok=True)
+
+# --- ENTRENAMIENTO DEL MODELO OPTIMIZADO ---
+df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+
+# Variables predictoras y objetivo
+X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
+y = df["turbidez"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+
+def objective(trial):
+    params = {
+        'max_depth': trial.suggest_int('max_depth', 3, 10),
+        'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3),
+        'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+        'n_estimators': trial.suggest_int('n_estimators', 200, 800),
+        'random_state': 42
+    }
+    model = XGBRegressor(**params)
+    score = cross_val_score(model, X_train, y_train, scoring='r2', cv=5).mean()
+    return score
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=50, show_progress_bar=False)
+
+best_params = study.best_params
+print("=== MEJORES PARÁMETROS ===")
+print(best_params)
+print(f"R² promedio CV: {study.best_value:.3f}")
+
+# Entrenar modelo final
+model = XGBRegressor(**best_params)
+model.fit(X_train, y_train)
+
+# Evaluar desempeño
+y_test_pred = model.predict(X_test)
+print(f"R² test: {r2_score(y_test, y_test_pred):.3f}")
+print(f"RMSE test: {np.sqrt(mean_squared_error(y_test, y_test_pred)):.3f}")
+
+# --- PROCESAR RASTERS ---
+feature_names = ["B01", "B02", "B03", "B04", "B05",
+                 "B06", "B07", "B08", "B11", "B12", "B8A"]
+
+tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
+print(f"\nSe encontraron {len(tifs)} archivos .tif")
+
+for ruta in tifs:
+    nombre = os.path.basename(ruta)
+    fecha = os.path.splitext(nombre)[0]
+    print(f"\nProcesando: {nombre}")
+
+    with rs.open(ruta) as raster:
+        bandas = [raster.read(i).astype(np.float32) for i in range(1, 12)]
+        perfil = raster.profile
+
+    # --- NDWI y máscara de agua ---
+    B03, B11 = bandas[2], bandas[9]
+    ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
+    umbral = np.nanmean(ndwi)
+    mascara = (ndwi > umbral).astype(np.uint8)
+
+    # --- Crear matriz de predicción ---
+    filas, cols = B03.shape
+    X_img = np.stack(bandas, axis=-1)
+    X_img_2d = X_img.reshape(-1, X_img.shape[-1])
+    X_img_df = pd.DataFrame(X_img_2d, columns=feature_names)
+
+    # --- Predecir turbidez ---
+    turbidez_pred = model.predict(X_img_df)
+    turbidez_pred = turbidez_pred.reshape(filas, cols)
+
+    # Aplicar máscara
+    turbidez_agua = np.where(mascara == 1, turbidez_pred, np.nan)
+
+    # --- Exportar GeoTIFF ---
+    salida_tif = os.path.join(salida, f"turbidez_{fecha}.tif")
+    perfil.update(dtype=rs.float32, count=1, compress='lzw', nodata=np.nan)
+    with rs.open(salida_tif, 'w', **perfil) as dst:
+        dst.write(turbidez_agua.astype(np.float32), 1)
+
+    # --- Visualización ---
+    p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4.5))
+
+    im1 = axes[0].imshow(mascara, cmap="Greys")
+    axes[0].set_title(f"Máscara de agua - {fecha}")
+    axes[0].axis("off")
+    fig.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04, label="Agua / No Agua")
+
+    im2 = axes[1].imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
+    axes[1].set_title(f"Turbidez (XGBoost Optuna) - {fecha}")
+    axes[1].axis("off")
+    fig.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04, label="Turbidez (NTU)")
+
+    plt.tight_layout()
+    plt.show()
+
+```
