@@ -744,3 +744,151 @@ plt.tight_layout()
 plt.show()
 
 ```
+
+
+
+
+
+```{python}
+#| echo: false
+#| warning: false
+#| message: false
+
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error
+import pandas as pd
+import numpy as np
+
+# Leer datos
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
+
+# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
+X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
+y = df["turbidez"]
+
+# Dividir en train/test
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42)
+
+# --- OPTIMIZACIÓN DE HIPERPARÁMETROS CON OPTUNA ---
+
+import optuna
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+from xgboost import XGBRegressor
+from sklearn.model_selection import cross_val_score
+
+def objective(trial):
+    # Espacio de búsqueda de hiperparámetros
+    params = {
+        'max_depth': trial.suggest_int('max_depth', 3, 10),
+        'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3),
+        'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+        'n_estimators': trial.suggest_int('n_estimators', 200, 800),
+        'random_state': 42
+    }
+
+    # Modelo con los parámetros actuales
+    model = XGBRegressor(**params)
+
+    # Validación cruzada de 5 particiones
+    score = cross_val_score(model, X_train, y_train, scoring='r2', cv=5).mean()
+    return score
+
+# Crear estudio de optimización
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=50, show_progress_bar=True)
+
+# Mostrar resultados
+
+import pandas as pd
+from IPython.display import display
+
+# Convertir los mejores parámetros a DataFrame
+best_params_df = pd.DataFrame([study.best_params])
+
+# Agregar la métrica objetivo (R²)
+best_params_df["R2_promedio_CV"] = study.best_value
+
+# Mostrar tabla
+display(best_params_df)
+
+# Entrenar el modelo final con los mejores parámetros
+model = XGBRegressor(**study.best_params)
+model.fit(X_train, y_train)
+
+# PARA GUARDAR EL MODELO
+import os
+
+ruta_modelo = r"D:\GIT\Turbidez\Output\Modelos"
+os.makedirs(ruta_modelo, exist_ok=True)
+
+model.save_model(os.path.join(ruta_modelo, "modelo_xgboost_optuna.json"))
+
+# --- Predicciones ---
+y_train_pred = model.predict(X_train)
+y_test_pred = model.predict(X_test)
+
+# --- Métricas entrenamiento ---
+r2_train = r2_score(y_train, y_train_pred)
+rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
+
+# --- Métricas testeo ---
+r2_test = r2_score(y_test, y_test_pred)
+rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
+
+# --- Print resultados ---
+print("=== Resultados Entrenamiento ===")
+print(f"R² train: {r2_train:.3f}")
+print(f"RMSE train: {rmse_train:.3f}")
+
+print("\n=== Resultados Testeo ===")
+print(f"R² test: {r2_test:.3f}")
+print(f"RMSE test: {rmse_test:.3f}")
+
+# Gráfico estimado vs real
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.figure(figsize=(4.5, 4.5))
+
+# --- Puntos entrenamiento ---
+plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
+            label="Datos de entrenamiento", marker='o')
+
+# --- Puntos test ---
+plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
+            label="Datos de testeo", marker='^')
+
+# --- Línea ideal 1:1 ---
+min_val = min(np.min(y_train), np.min(y_test))
+max_val = max(np.max(y_train), np.max(y_test))
+plt.plot([min_val, max_val], [min_val, max_val], '--',
+         color="#17A77E", lw=2, label="Línea ideal")
+
+# --- Línea de tendencia sobre test ---
+coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
+x_tendencia = np.linspace(min_val, max_val, 100)
+y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
+plt.plot(x_tendencia, y_tendencia, '-', color='black',
+         lw=2, label="Línea de tendencia (test)")
+
+# --- Etiquetas ---
+plt.xlabel("Turbidez real (NTU)")
+plt.ylabel("Turbidez estimada (NTU)")
+
+plt.title(
+    f"Modelo XGBoost (Optimizado con Optuna)\n"
+    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
+    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
+)
+
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+
+```
+```

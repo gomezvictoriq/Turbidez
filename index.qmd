@@ -1,15 +1,26 @@
 ---
 title: "Algoritmo para la estimación de la turbidez sobre el Río Paraná"
+
+
+freeze: auto
+
+
 format: 
   html:
     number-sections: true
     toc: true
+    toc-location: left
     embed-resources: true
     crossrefs-hover: false
     lang: es
     bibliography: bibliografia/bibliografia.bib
     csl: bibliografia/ieee.csl
-    theme: cosmo 
+    theme: flatly
+    page-layout: full
+    css: styles/styles.css
+
+    
+
 date: last-modified
 author:
   - name: Víctor Gustavo Gómez
@@ -120,7 +131,23 @@ scikit [@Zhao2022].
 
 ::::
 
-# Procesamiento de datos
+```{python}
+
+```
+
+# Lectura y procesamiento de datos
+
+Este sitio web está configurado de manera tal que se mantenga actualizado al tener disponibles nuevos datos de entrada, que serán procesados posteriormente. Mostrando siempre los resultados de todo el proceso. 
+
+El código a continuación se dedica a la descarga automática de archivos desde el repositorio principal del proyecto.
+
+```{python}
+#| code-fold: true
+from descarga_datos import main
+main()
+```
+
+## Procesamiento de archivos csv
 
 Para el procesamiento de los datos se utilizará la librería *pandas* de Python.
 
@@ -130,311 +157,171 @@ En el proyecto tenemos dos archivos .csv que contienen los datos:
 
 -base_de_datos_gis.csv → contiene datos espectrales
 
-**Importamos la librería *pandas* para usarla, la nombramos como "pd" para simplificar**
-
 ```{python}
+#| code-fold: true
 import pandas as pd
-```
 
-**Leemos los archivos .csv por separado y definimos dos DataFrame**
+#Lectura de datos
 
-Un DataFrame es basicamente una tabla, donde la información se organiza en filas y columnas. Los datos de la misma columna contienen el mismo tipo de datos, pandas agrega por defecto un "índice" que nos ayuda a identificar una fila en particular.
+df1_lab = pd.read_csv(r"D:\GIT\Turbidez\Input\base_de_datos_lab.csv") # DataFrame de datos de laboratorio.
+df2_gis = pd.read_csv(r"D:\GIT\Turbidez\Input\base_de_datos_gis_acolite.csv") # DataFrame de datos espectrales
 
-Con la función *pd.read_csv* le idicamos a pandas que queremos leer archivos .csv.
+# Combinamos ambos DataFrame para tener los datos en una única base de datos
 
-```{python}
-df1_lab = pd.read_csv(r"D:\GIT\Turbidez\datos\base_de_datos_lab.csv")
-df2_gis = pd.read_csv(r"D:\GIT\Turbidez\datos\base_de_datos_gis_acolite.csv")
-```
-
-**df1_lab** DataFrame de datos provenientes del laboratorio.
-
-**df2_gis** DataFrame de datos espectrales provenientes del sensor MSI de Sentinel-2.
-
-**Nota:** Se debió colocar la "r" delante de la dirección para que lea los archivos.
-
-Video de YouTube [¿Qué es un DataFrame?](https://www.youtube.com/watch?v=LnH_STJ2GXo)  
-
-Verificamos que los datos se han leído y se crearon correctamente ambos DataFrame por separado, con *print* 
-
-```{python}
-df1_lab.head()
-
-df2_gis.head()
-```
-
-**Nota:** La primer columna (donde se ven los valores 0,1,2,3,4, ...) es el *índice* que agrega pandas por defecto al DataFrame, esa columna no forma parte del csv original.
-
-
-**Combinamos ambos DataFrame para tener los datos en una única base de datos.**
-
-Lo defimos como **df_combinado**, para esto utilizamos la función *pd.merge* para realizar la combinación.
-
-```{python}
 df_combinado = pd.merge(df1_lab, df2_gis, on=['latitud', 'longitud','fecha'], how='inner')
-```
 
-**on=['latitud', 'longitud','fecha']**	Especifica las columnas por las cuales se unirán los dos DataFrames. En este caso, por coincidencias exactas en latitud, longitud y fecha.
+# Filtramos las filas que contengas los valores de turbidez
 
-**how='inner'**	Es el tipo de unión, significa que solo se conservarán las filas que tengan coincidencias en ambos DataFrames en las columnas mencionadas.
-
-Verificamos que la combinacion se haya realizado correctamente
-
-```{python}
-df_combinado.head()
-```
-
-**Filtramos la turbidez del DataFrame**
-
-Del DataFrame combinado, solo nos interesa las filas que contengan los valores de turbidez, ya que es la propiedad de estudio en este sitio web. Por ello nos quedamos con las filas en donde la columna *param* sea igual a *turb*.
-
-Creamos un nuevo DataFrame a partir de *df_combinado*.
-```{python}
 df_turbidez = df_combinado[(df_combinado['param'] == 'turb')]
-```
 
-Verificamos
-```{python}
-df_turbidez.head()
-```
-
-**Nota:** Se han eliminado las filas de ph, cond, sol_sus, etc. Se conserva el índice del DataFrame original.
-
-**Eliminamos las columnas que no nos interesan**
-
-Creamos un nuevo DataFrame a partir de *df_turbidez*. Con la función **.drop** especificamos que columnas queremos eliminar.
-
-```{python}
+# Eliminamos las columnas que no nos interesan
 df_turbidez_banda = df_turbidez.drop(columns=['longitud','latitud','punto','fecha','param'])
 
 df_turbidez_banda.head()
-```
 
-**Nota:** Solo nos quedamos con las columnas valor,banda y reflect.
+# Cambiamos el nombre de la columna "valor" por el de "turbidez
 
-**Cambiamos el nombre de la columna "valor" por el de "turbidez"**
-Como los valores de esa columna son de turbidez, directamente cambiamos el nombre de la columna con la función **.rename**
-
-```{python}
 df_turbidez_banda.rename(columns={'valor': 'turbidez'}, inplace=True)
 
 df_turbidez_banda.head()
-```
 
-**Creamos la tabla final**
+# Pivotamos tabla
 
-Usamos la función **.pivot_table** para que las columnas sean la turbidez y las distintas bandas de Sentinel-2 (B01, B02 , B03...)
-
-```{python}
 df_final = df_turbidez_banda.pivot_table(
-    index='turbidez',
-    columns='banda',
-    values='reflect',  
-    )
+        index='turbidez',
+        columns='banda',
+        values='reflect',)
+
+# Creamos tabla final
+
+df_final.to_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv", index=True)
 ```
 
-¿Qué significa cada término en el argumento de la función pivot_table?
-
-index='turbidez' → Las filas serán los valores únicos de 'turbidez'
-
-columns='banda'  → Las columnas serán los valores únicos de 'banda' (B01, B02...)
-
-values='reflect' → El contenido de la tabla será lo que haya en la columna 'reflect'
-
-**Creamos archivo final con los valores de turbidez y reflectancia de cada banda**
-
-***-Forma 1***
-Creamos un .csv con los datos que nos interesan con la función **.to_csv**
+La datos útiles a este sitio están ordenanos de la siguiente forma. (Solo se muestran las 5 primeras filas)
 
 ```{python}
- df_final.to_csv('Turbidez_FINAL.csv', index=True)
-```
-
-**IMPORTANTE:** **index=True** , debe ser así para que el índice que definimos al pivotar sea una columna visible en el archivo csv.
-
-Recordemos que la columna **index** es solo visible solo por la librería *pandas*, 
-Si guardamos con **index=False**, se omite y no se guarda en el csv.
-
-***-Forma 2***
-Si decidimos poner **index=False** tenemos que usar una función adicional antes de exportar, debido a que la turbidez está en el índice, no como una columna.
-
-Por lo tanto, luego de hacer el pivot se debe agregar una línea de código.
-
-```{python}
-df_final = df_turbidez_banda.pivot_table(
-    index='turbidez',
-    columns='banda',
-    values='reflect',  
-    )
-
-df_final = df_final.reset_index() #Línea de código que se debe agregar
-```
-
-**reset_index()** convierte el índice definido previamente como "turbidez" en una columna normal y reemplaza el índice por uno numérico estándar (0, 1, 2...). que es el predeterminado por pandas.
-
-Finalmente exportamos como archivo csv.
-```{python}
-df_final.to_csv('Turbidez_FINAL2.csv', index=False)
-```
-
-**Verificación tabla final**
-
-```{python}
+#| echo: false
+#| warning: false
+#| message: false
 import pandas as pd
 
-df = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+df = pd.read_csv(r'D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv')
 
 df.head()
 ```
 
-# Prueba de modelo lineal
+## Procesamiento de productos satelitales
 
-**Regresión lineal con método de mínimos cuadrados**
+Para el procesamiento se utilizará la librería *rasterio* en python.
 
-Reemplamos el código del tutorial de sklearn por nuestros datos.
+Tabla de referencia para seleccionar bandas en rasterio
 
-Debemos importar las funciones necesarias para:
+| Nombre de banda en archivo .tif | Banda de Sentinel-2 | Número para la lectura en rasterio |
+|---------------------------------|---------------------|------------------------------------|
+| Banda 1                         | B01                 | 1                                  |
+| Banda 2                         | B02                 | 2                                  |
+| Banda 3                         | B03                 | 3                                  |
+| Banda 4                         | B04                 | 4                                  |
+| Banda 5                         | B05                 | 5                                  |
+| Banda 6                         | B06                 | 6                                  |
+| Banda 7                         | B07                 | 7                                  |
+| Banda 8                         | B08                 | 8                                  |
+| Banda 9                         | B8A                 | 9                                  |
+| Banda 10                        | B11                 | 10                                 |
+| Banda 11                        | B12                 | 11                                 |
 
-1- Leer el archivo .csv creado previamente , que contiene los datos de turbidez y los valores de reflectancia para cada banda.
+Lectura de imágen raster y visualización del área de estudio, con el objetivo de verificar que el código está funcionando y de que se leen correctamente los archivos.
 
-2- Para usar el método de mínimos cuadrados
-
-**Importamos las funciones**
 ```{python}
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
+#| echo: false
+#| warning: false
+#| message: false
+import rasterio as rs
 import matplotlib.pyplot as plt
-```
+import numpy as np
 
-*pandas* → para leer los datos
+ruta = r"D:\GIT\Turbidez\Input\recorte_acolite\2025-06-09.tif"
 
-*train_test_split* → para dividir los datos en entrenamiento y validación
+# Abrir el archivo
+with rs.open(ruta) as raster:
 
-*LinearRegression* → para crear el modelo de regresión lineal
+    #Definimos las bandas 
+    #Bandas RGB para ver área de estudio
+    B02 = raster.read(2) #Azul
+    B03 = raster.read(3) #Verde
+    B04 = raster.read(4) #Rojo
 
-*mean_squared_error* y *r2_score* → Para medir el desempeño del modelo (RMSE y R2)
+    #Para calcular NDWI con B03 y B11
+    B11 = raster.read(10)
 
-*matplotlib.pyplot* → para realizar gráficos
+    #para el modelo
+    B05 = raster.read(5)
+    
+# Composión de imagen 
+rgb = np.stack([B04, B03, B02], axis=-1)
 
-**Leemos los datos de interés y los dividimos en entrenamiento y validación.**
+# Mejorar constraste
+def stretch(banda):
+    p2, p98 = np.percentile(banda, (2, 98))
+    return np.clip((banda - p2) / (p98 - p2 + 1e-6), 0, 1)
 
-Lectura de datos, lo hacemos con *pd.read_csv*
+rgb_stretched = np.stack([stretch(B04), stretch(B03), stretch(B02)], axis=-1)
 
-```{python}
-df = pd.read_csv(r"D:\GIT\Turbidez\Turbidez_FINAL.csv")
-
-X = df[['B05']]  
-y = df['turbidez']  
-```
-
-Definimos: 
-
-**df**, un DataFrame que contiene los datos de turbidez y reflectancia;
-
-**X** para que sea los valores de reflectancia de una banda en particular;
-
-**y** para que sea la turbidez.
-
-**Dividimos en datos para el entrenamiento y validación**
-```{python}
-X_train, X_test, y_train, y_test = train_test_split(
-  X, y, test_size=0.25, shuffle=True, random_state=42 
-)
-```
-
-Conjunto de datos para el entrenamiento
-**X_train** y **X_test**
-
-Conjunto de datos para la validación
-**y_train** y **y_test**
-
-**Creamos el modelo de regresión**
-
-```{python}
-regressor = LinearRegression().fit(X_train, y_train)
-```
-
-**LinearRegression()** Crea el modelo de regresión lineal llamado "*regressor*". Este modelo, se entrena con la función **.fit** a partir de los datos de entrenamiento (X_train, y_train)
-
-
-**Evaluamos el modelo generado a partir de las métricas de desempeño.**
-
-```{python}
-y_pred = regressor.predict(X_test)
-p_rmse = mean_squared_error(y_test, y_pred)
-p_r2 = r2_score(y_test, y_pred)
-```
-Con la función **print** visualizamos los valores de las métricas de desempeño
-```{python}
-print("RMSE", p_rmse) 
-print("R2", p_r2)
-```
-
-Para ver la ecuación del modelo de regresión
-
-```{python}
-# Coeficientes (pendientes)
-coef = regressor.coef_
-
-# Intercepto (ordenada al origen)
-intercept = regressor.intercept_
-
-print(f"La ecuación es: y = {coef[0]:.3f}x + {intercept:.3f}")
-```
-
-**Visualizamos los resultados comparando el conjunto de entrenamiento y validación.**
-```{python}
-#| code-fold: true
-fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
-
-#Gráfico de entrenamiento
-ax[0].plot(
-    X_train,
-    regressor.predict(X_train),
-    linewidth=3,
-    color="#17A77E",
-    label="Modelo",
-)
-
-ax[0].scatter(X_train, y_train, label="Entrenamiento", color = "#9D50A6", alpha = .6)
-ax[0].set(xlabel="Banda 5", ylabel="Turbidez", title="Conjunto de entrenamiento")
-ax[0].legend()
-
-#Gráfico de validación
-ax[1].plot(X_test, y_pred, linewidth=3, color="#17A77E", label="Modelo")
-ax[1].scatter(X_test, y_test, label="Validación", color = "#9D50A6", alpha = .6)
-ax[1].set(xlabel="Banda 5", ylabel="Turbidez", title="Conjunto de validación")
-ax[1].legend()
-
-#Ecuación de la recta
-coef = regressor.coef_[0]
-intercept = regressor.intercept_
-equation = f"y = {coef:.2f}x + {intercept:.2f}"
-# Mostrar la ecuación en ambos subgráficos (opcionalmente, puedes usar solo uno)
-for a in ax:
-    a.text(0.05, 0.95, equation, transform=a.transAxes,
-           fontsize=10, verticalalignment='top',
-           bbox=dict(boxstyle="round", facecolor="white", alpha=0.7))
-
-fig.suptitle("Regresión lineal")
-
+# Gráfico
+plt.figure(figsize=(4.5, 4.5))
+plt.imshow(rgb_stretched)
+plt.title("Río Paraná")
+plt.axis("off")
+plt.tight_layout()
 plt.show()
 ```
 
+Se utilizrá el índice NDWI para recortar cada la imágen satelital, y poder trabajar únicamente con los píxeles de agua.
 
-# Pruebas de correlación
+$NDWI=(B03-B11)/(B03+B11)$
 
-Para ser más rigurosos, agregamos más etapas durante el entrenamiento de nuestro modelo lineal.
+```{python, echo=FALSE}
+#| code-fold: true
+import numpy as np
+import matplotlib.pyplot as plt
+from skimage.filters import threshold_otsu
 
-En esta etapa nos interesa estimar la turbidez por medio de modelos lineales sencillos, para encontrar mejores modelos podemos aplicar transformaciones logarítmicas con el objetivo principal de linealizar relaciones no lineales.
+# NDWI
+ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
 
-Primeramente se probará un modelo sin aplicar ninguna transformaciones en las variables. 
+# Calcular umbral automático con Otsu
+umbral = threshold_otsu(ndwi[np.isfinite(ndwi)])  # descartamos NaN e inf
 
-En las siguientes secciones, se aplicará logaritmo en la turbidez, en las bandas espectrales y en en ambas, con el fin de evaluar en rendimiento de los modelos y seleccionar los mejores, según sus métricas de desempeño.
+# Binarización: agua = 1, no agua = 0
+ndwi_bin = np.where(ndwi >= umbral, 1, 0)
+
+# Gráfico máscara de agua
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+img = ax.imshow(ndwi_bin, cmap='Greys')
+ax.set_title(f"NDWI - Otsu (umbral={umbral:.3f})")
+cbar = fig.colorbar(img, ax=ax, fraction=0.046, pad=0.04)
+cbar.set_label("Agua (1) / No Agua (0)")
+ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+ax.axis("on")
+plt.tight_layout()
+plt.show()
+```
+
+Durante la verificacion de los recortes de las imágenes satélitales, se observó que con el método Otsu no se puede calcular correctamente el valor umbral **agua/no agua** , por ende no se puede procesar correctamente algunas imágenes. Para resolver esto se decidió utilizar el valor promedio del NDWI para calcular el valor umbral, el cual sí puede hacer una mejor demarcación de las zona agua/no agua.
+
+Una vez entrenado y validado los modelos, se hará automáticamente la lectura de archivos **.tif** de entrada, a cada una se realizara el cálculo de umbral de máscara de agua y su procesamiento para generar mapas de turbidez, 
+
+## Pruebas de correlación
+
+Para ser más rigurosos, agregaremos ésta etapaa durante el entrenamiento de nuestro modelo lineal.
+
+En esta primera etapa nos interesa estimar la turbidez por medio de modelos lineales sencillos, para encontrar mejores modelos podemos aplicar transformaciones logarítmicas con el objetivo principal de linealizar relaciones no lineales.
+
+Primeramente se probará un modelo sin aplicar ninguna transformaciones en las variables, luego se aplicará logaritmo natural en la turbidez, en las bandas espectrales y en en ambas varaibles, con el fin de evaluar en rendimiento de los modelos y seleccionar los mejores, según sus métricas de desempeño.
 
 Se utilizará el coeficiente de correlación lineal **r**, para evaluar la relación lineal entre la turdidez y las distintas bandas (con y sin transformación logarítmica).
+
+Calculamos coeficiente de correlacion lineal **r** entre la turbidez y cada banda con la función *.corr* de pandas.
 
 Esta medida indica cuanto se relacionan dos variables, puede tomar valores desde -1 a +1: 
 
@@ -445,22 +332,17 @@ Esta medida indica cuanto se relacionan dos variables, puede tomar valores desde
 • -1 correlación lineal perfecta negativa.
 
 
-## Prueba de correlación C1: (sin aplicar logaritmo)
-
-**Importamos *pandas* para leer los datos**
+**Prueba de correlación C1: (sin aplicar logaritmo)**
+ 
+Cálculo de correlación lineal entre la turbidez y las bandas espectrales.
 
 ```{python}
 #| code-fold: true
+
 import pandas as pd
 
-Datos= pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
-#print (Datos.head())
-```
+Datos= pd.read_csv(r'D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv')
 
-**Calculamos coeficiente de correlacion lineal "r" entre la turbidez y cada banda con la función *.corr* de pandas.** 
-
-```{python}
-#| code-fold: true
 bandas = [col for col in Datos.columns if col.startswith('B')]
 
 correlaciones = {}
@@ -477,90 +359,31 @@ df_correlaciones1 = df_correlaciones1.sort_values(by='r', ascending=False).reset
 df_correlaciones1['Banda'] = "turb vs " + df_correlaciones1['Banda'].astype(str)
 df_correlaciones1.rename(columns={'Banda': 'Combinación 1'}, inplace=True)
 
-df_correlaciones1.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C1_turb_vs_banda.csv', index=False)
+df_correlaciones1.to_csv(r'D:\GIT\Turbidez\Output\correlaciones\C1_turb_vs_banda.csv', index=False)
 
-
-#Creo archivo csv para usarlo para entrenar modelos
-Datos.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv", index=False)
-
-df_correlaciones1
+#df_correlaciones1
 ```
 
+**Prueba de correlación C2: logaritmo en la turbidez**
 
-**Gráfica Turbidez en funcion de las distintas bandas**
-
-```{python}
-#| code-fold: true
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# Cargar los datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
-
-# Seleccionar las columnas de bandas (excepto turbidez)
-bandas = [col for col in df.columns if col != 'turbidez']
-
-# Crear una figura con subplots
-# Seleccionar las columnas de bandas (excepto turbidez)
-bandas = [col for col in df.columns if col != 'turbidez']
-
-# Cantidad de bandas
-n = len(bandas)
-
-# Calcular las filas y columnas para el grid de subplots
-filas = (n + 2) // 3  # hasta 3 columnas por fila
-columnas = 3
-
-# Crear figura y ejes
-fig, axes = plt.subplots(filas, columnas, figsize=(12, filas * 3))
-axes = axes.flatten()
-
-# Graficar cada banda
-for i, banda in enumerate(bandas):
-    ax = axes[i]
-    ax.scatter(df[banda], df['turbidez'], alpha=0.6, s=10)
-    ax.set_title(f'Turbidez vs {banda}', fontsize=10)
-    ax.set_xlabel(banda)
-    ax.set_ylabel('Turbidez')
-    ax.grid(True)
-
-# Ocultar los subplots vacíos si hay
-for j in range(i + 1, len(axes)):
-    fig.delaxes(axes[j])
-
-# Ajustar espacio
-plt.tight_layout()
-plt.show()
-
-```
-
-Las mejores bandas para predecir turbidez (por correlación lineal) son:
-
-**B05 > B06 > B08 > B07 > B04**
-
-## Prueba de correlación C2: logaritmo en la turbidez
-
-**Importamos *nunpy* para operar con funciones matemáticas**
-
-Creamos un nuevo DataFrame para aplicarle el logaritmo a la colomna turbidez.
+El código a continuación aplica logaritmo a la columna de turbidez.
 
 ```{python}
 #| code-fold: true
 import numpy as np
 
-Datos_turb_log = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
+Datos_turb_log = pd.read_csv(r'D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv')
 Datos_turb_log['turbidez'] = np.log(Datos_turb_log['turbidez'])
 
 #Cambio el nombre la columna "turbidez" luego de aplicar el logaritmo
 Datos_turb_log = Datos_turb_log.rename(columns={'turbidez': 'ln_turbidez'})
 
 #Creo archivo csv para usarlo para entrenar modelos
-Datos_turb_log.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C2_ln_turb_banda.csv", index=False)
-#print(Datos_turb_log.head())
+Datos_turb_log.to_csv(r"D:\GIT\Turbidez\Output\csv\ln_turb-bandas.csv", index=False)
 
 ```
 
-Calculamos *r* entre el ln_turb y cada banda, con la función **.corr** de pandas. 
+Cálculo de correlación lineal  entre el logaritmo de la turbidez y las bandas espectrales.
 
 ```{python}
 #| code-fold: true
@@ -580,107 +403,47 @@ df_correlaciones2 = df_correlaciones2.sort_values(by='r', ascending=False).reset
 df_correlaciones2['Banda'] = "ln_turb vs " + df_correlaciones2['Banda'].astype(str)
 df_correlaciones2.rename(columns={'Banda': 'Combinación 2'}, inplace=True)
 
-df_correlaciones2.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C2_ln_turb_vs_banda.csv', index=False)
+df_correlaciones2.to_csv(r'D:\GIT\Turbidez\Output\correlaciones\C2_ln_turb_vs_banda.csv', index=False)
 
-df_correlaciones2
 ```
 
-**Gráfica**
+**Prueba de correlación C3: logaritmo en las bandas**
 
-```{python}
-#| code-fold: true
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# Cargar los datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C2_ln_turb_banda.csv")
-
-# Seleccionar las columnas de bandas (excepto turbidez)
-bandas = [col for col in df.columns if col != 'ln_turbidez']
-
-# Crear una figura con subplots
-# Seleccionar las columnas de bandas (excepto turbidez)
-bandas = [col for col in df.columns if col != 'ln_turbidez']
-
-# Cantidad de bandas
-n = len(bandas)
-
-# Calcular las filas y columnas para el grid de subplots
-filas = (n + 2) // 3  # hasta 3 columnas por fila
-columnas = 3
-
-# Crear figura y ejes
-fig, axes = plt.subplots(filas, columnas, figsize=(12, filas * 3))
-axes = axes.flatten()
-
-# Graficar cada banda
-for i, banda in enumerate(bandas):
-    ax = axes[i]
-    ax.scatter(df[banda], df['ln_turbidez'], alpha=0.6, s=10)
-    ax.set_title(f'ln_turbidez vs {banda}', fontsize=10)
-    ax.set_xlabel(banda)
-    ax.set_ylabel('ln_turbidez')
-    ax.grid(True)
-
-# Ocultar los subplots vacíos si hay
-for j in range(i + 1, len(axes)):
-    fig.delaxes(axes[j])
-
-# Ajustar espacio
-plt.tight_layout()
-plt.show()
-```
-
-El orden general se mantiene, pero los valores de r bajan un poco al aplicar el logaritmo a la turbidez.
-Las mejores bandas siguen siendo:
-B05 > B04 > B06 > B07 > B08
-
-Aunque r haya bajado ligeramente, esas bandas siguen siendo las más prometedoras predictoras lineales.
-
-## Prueba de correlación C3: logaritmo en las bandas
-
-Anteriormente se estaba trabajando con una base de datos de reflectancias procesadas con Sen2Cor. Actualmente trabajamos con una nueva base de datos con las reflectancias corregidas por ACOLITE.
+Anteriormente en el proyecto se estaba trabajando con una base de datos de reflectancias procesadas con Sen2Cor. Actualmente trabajamos con una nueva base de datos con las reflectancias corregidas por Acolite.
 
 Acolite y Sen2Cor son dos herramientas de software utilizadas para la corrección atmosférica de imágenes satelitales. Acolite se destaca en ambientes acuáticos eutróficos, mientras que Sen2Cor es un procesador más general para la creación de productos Sentinel-2 de nivel 2A.
 
-**IMPORTANTE:** Este cambio provocó errores en el código a partir de esta sección en adelante, el error se debe a que hay valores de reflectancia que son cero y negativos en la banda 12. 
+**IMPORTANTE:** Este cambio provocó errores en el código a partir de esta sección en adelante, el error se debe a que hay valores de reflectancia que son cero y negativos en la banda 12, en los datos provenientes de ACOLITE.
 
-En las pruebas de correlación C3 y C4 aplicamos logaritmo a las bandas. Por defincion de logaritmo no ponemos tomar valores cero ni negativos. Para salvar este error, se procedió a filtrar filas con esos valores.
+En las pruebas de correlación C3 y C4 aplicamos logaritmo a las bandas. Por definción de logaritmo no ponemos tomar valores cero ni negativos. Para salvar este error, se procedió a filtrar filas con esos valores.
 
-Creaamos un nuevo DataFrame para aplicarle el logaritmo a las bandas.
+Creamos un nuevo DataFrame para aplicarle el logaritmo a las bandas. (Se usará tambien para la prueba de correlación 4)
 
 ```{python}
 #| code-fold: true
+
 import pandas as pd
 
 # Leer los datos
-Datos = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
-
-# Guardar cantidad original de filas
-filas_originales = Datos.shape[0]
+Datos = pd.read_csv(r'D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv')
 
 # Filtrar filas: nos quedamos solo con aquellas donde **todos los valores sean mayores a 0**
-Datos_filtrado = Datos[(Datos > 0).all(axis=1)]
+Datos_filtrados = Datos[(Datos > 0).all(axis=1)]
 
-# Calcular cuántas filas se eliminaron
-filas_finales = Datos_filtrado.shape[0]
-filas_eliminadas = filas_originales - filas_finales
 
-# Mostrar resultado
-print(f"Se eliminaron {filas_eliminadas} filas que contenían ceros o valores negativos.")
+Datos_filtrados.to_csv(r"D:\GIT\Turbidez\Output\csv\Datos_filtrados-para-usar-ln.csv", index=False)
 
-# Si querés seguir trabajando con el DataFrame filtrado:
-DatosC3_C4 = Datos_filtrado
-#DatosC3_C4
 ```
 
 Aplicamos logaritmo a las bandas
 
 ```{python}
 #| code-fold: true
+
+# Este chunk sólo se usa para aplicar logaritmo a datos_filtrados 
 import numpy as np
 
-DatosC3 = DatosC3_C4.copy()
+DatosC3 = Datos_filtrados.copy()
 
 col = [col for col in DatosC3.columns if col.startswith('B')]
 
@@ -693,12 +456,11 @@ DatosC3.columns = ['ln_' + col for col in DatosC3.columns]
 DatosC3.rename(columns={'ln_turbidez': 'turbidez'}, inplace=True)
 
 #Creo archivo csv para usarlo para entrenar modelos
-DatosC3.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C3_turb_vs_ln_banda.csv", index=False)
+DatosC3.to_csv(r"D:\GIT\Turbidez\Output\correlaciones\C3_turb_vs_ln_banda.csv", index=False)
 
-#DatosC3
 ```
 
-Calculamos *r* entre turb y ln de cada banda, con la función **.corr** de pandas. 
+Cálculo de correlación lineal entre la turbidez y el logaritmo de las bandas espectrales. 
 
 ```{python}
 #| code-fold: true
@@ -719,108 +481,27 @@ df_correlaciones3['Banda'] = "turb vs " + df_correlaciones3['Banda'].astype(str)
 df_correlaciones3.rename(columns={'Banda': 'Combinación 3'}, inplace=True)
 
 
-df_correlaciones3.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C3_turb_vs_ln_banda.csv', index=False)
+df_correlaciones3.to_csv(r'D:\GIT\Turbidez\Output\correlaciones\C3_turb_vs_ln_banda.csv', index=False)
 
-df_correlaciones3
 ```
 
-ln_B05 , ln_B06 , ln_B07 , ln_B08
-
-Estas cuatro variables transformadas logarítmicamente se correlacionan de forma fuerte con la turbidez.
-
-**Gráfica**
-```{python}
-#| code-fold: true
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# Cargar los datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C3_turb_vs_ln_banda.csv")
-
-# Seleccionar las columnas de bandas (excepto turbidez)
-bandas = [col for col in df.columns if col.startswith('ln_B')]
-
-# Crear una figura con subplots
-# Seleccionar las columnas de bandas (excepto turbidez)
-bandas = [col for col in df.columns if col.startswith('ln_B')]
-
-# Cantidad de bandas
-n = len(bandas)
-
-# Calcular las filas y columnas para el grid de subplots
-filas = (n + 2) // 3  # hasta 3 columnas por fila
-columnas = 3
-
-# Crear figura y ejes
-fig, axes = plt.subplots(filas, columnas, figsize=(12, filas * 3))
-axes = axes.flatten()
-
-# Graficar cada banda
-for i, banda in enumerate(bandas):
-    ax = axes[i]
-    ax.scatter(df[banda], df['turbidez'], alpha=0.6, s=10)
-    ax.set_title(f'Turbidez vs {banda}', fontsize=10)
-    ax.set_xlabel(banda)
-    ax.set_ylabel('Turbidez')
-    ax.grid(True)
-
-# Ocultar los subplots vacíos si hay
-for j in range(i + 1, len(axes)):
-    fig.delaxes(axes[j])
-
-# Ajustar espacio
-plt.tight_layout()
-plt.show()
-```
-
-## Prueba de correlación C4: logaritmo en turbidez y en bandas
-
-Primeramente verificamos que no hayan valores negativos y cero. Ya que por defincion de logaritno no los podremos utilizar.
+**Prueba de correlación C4: logaritmo en turbidez y en bandas**
 
 ```{python}
 #| code-fold: true
-import pandas as pd
-
-# Leer los datos
-Datos = pd.read_csv(r'D:\GIT\Turbidez\Turbidez_FINAL.csv')
-
-# Guardar cantidad original de filas
-filas_originales = Datos.shape[0]
-
-# Filtrar filas: nos quedamos solo con aquellas donde **todos los valores sean mayores a 0**
-Datos_filtrado = Datos[(Datos > 0).all(axis=1)]
-
-# Calcular cuántas filas se eliminaron
-filas_finales = Datos_filtrado.shape[0]
-filas_eliminadas = filas_originales - filas_finales
-
-# Mostrar resultado
-print(f"Se eliminaron {filas_eliminadas} filas que contenían ceros o valores negativos.")
-
-# Si querés seguir trabajando con el DataFrame filtrado:
-DatosC3_C4 = Datos_filtrado
-#DatosC3_C4
-```
-
-Creaamos un nuevo DataFrame para aplicarle el logaritmo a todas las columnas 
-
-Importamos *nunpy* para operar con funciones matemáticas
-
-```{python}
-#| code-fold: true
+#| 
 import numpy as np
 
-DatosC4 = np.log(DatosC3_C4)
+DatosC4 = np.log(Datos_filtrados)
 #Cambiamos en nombre las columnas, agremamos ln_ a cada columna
 DatosC4.columns = ['ln_' + col for col in DatosC4.columns]
 
 #Creo archivo csv para usarlo para entrenar modelos
-DatosC4.to_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv", index=False)
+DatosC4.to_csv(r"D:\GIT\Turbidez\Output\csv\ln_turb-ln_banda.csv", index=False)
 
-#DatosC4.head()
 ```
 
-Calculamos *r* entre el ln_turb y ln de cada banda, con la función **.corr** de pandas. 
+Cálculo de correlación lineal entre el logaritmo de la  turbidez y el logaritmo de las bandas espectrales.
 
 ```{python}
 #| code-fold: true
@@ -841,85 +522,35 @@ df_correlaciones4 = df_correlaciones4.sort_values(by='r', ascending=False).reset
 df_correlaciones4['Banda'] = "ln_turb vs " + df_correlaciones4['Banda'].astype(str)
 df_correlaciones4.rename(columns={'Banda': 'Combinación 4'}, inplace=True)
 
-df_correlaciones4.to_csv(r'D:\GIT\Turbidez\Datos creados\Correlaciones\C4_ln_turb_vs_ln_banda.csv', index=False)
+df_correlaciones4.to_csv(r'D:\GIT\Turbidez\Output\correlaciones\C4_ln_turb_vs_ln_banda.csv', index=False)
 
-df_correlaciones4
 ```
 
+Se resume en una tabla las pruebas de correlación realizadas
 
-**Gráfica**
+**Tabla resúmen de pruebas de correlación lineal **r** **
 
 ```{python}
-#| code-fold: true
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# Cargar los datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv")
-
-# Seleccionar las columnas de bandas (excepto turbidez)
-bandas = [col for col in df.columns if col != 'ln_turbidez']
-
-# Crear una figura con subplots
-# Seleccionar las columnas de bandas (excepto turbidez)
-bandas = [col for col in df.columns if col != 'ln_turbidez']
-
-# Cantidad de bandas
-n = len(bandas)
-
-# Calcular las filas y columnas para el grid de subplots
-filas = (n + 2) // 3  # hasta 3 columnas por fila
-columnas = 3
-
-# Crear figura y ejes
-fig, axes = plt.subplots(filas, columnas, figsize=(12, filas * 3))
-axes = axes.flatten()
-
-# Graficar cada banda
-for i, banda in enumerate(bandas):
-    ax = axes[i]
-    ax.scatter(df[banda], df['ln_turbidez'], alpha=0.6, s=10)
-    ax.set_title(f'ln_turbidez vs {banda}', fontsize=10)
-    ax.set_xlabel(banda)
-    ax.set_ylabel('ln_turbidez')
-    ax.grid(True)
-
-# Ocultar los subplots vacíos si hay
-for j in range(i + 1, len(axes)):
-    fig.delaxes(axes[j])
-
-# Ajustar espacio
-plt.tight_layout()
-plt.show()
-```
-
-B05, B04, B06, B07, B08 son los mejores candidatos como predictores en un modelo de regresión. Tienen una correlación fuerte con la turbidez, por encima de 0.78.
-
-
-**Comparación con combinaciones anteriores:**
-
-| Combinación | Variables transformadas | Mejor r        |
-| ----------- | ----------------------- | -------------- |
-| 1           | turbidez vs Banda       | B05 (0.88)     |
-| 2           | ln(turb) vs Banda       | B05 (0.80)     |
-| 3           | turbidez vs ln(Banda)   | B05 (0.72)     |
-| 4           | ln(turb) vs ln(Banda)   | B05 (0.87)     |
-
-# Seleción de variables
-Se resume en una tabla las pruebas de correlación realizadas.
-```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 import pandas as pd 
 
-C1 = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Correlaciones\C1_turb_vs_banda.csv")
-C2= pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Correlaciones\C2_ln_turb_vs_banda.csv")
-C3 = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Correlaciones\C3_turb_vs_ln_banda.csv")
-C4 = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Correlaciones\C4_ln_turb_vs_ln_banda.csv")
+# Aumentar el ancho total permitido
+pd.set_option('display.width', 2000)
+pd.set_option('display.max_columns', None)
+
+C1 = pd.read_csv(r"D:\GIT\Turbidez\Output\correlaciones\C1_turb_vs_banda.csv")
+C2= pd.read_csv(r"D:\GIT\Turbidez\Output\correlaciones\C2_ln_turb_vs_banda.csv")
+C3 = pd.read_csv(r"D:\GIT\Turbidez\Output\correlaciones\C3_turb_vs_ln_banda.csv")
+C4 = pd.read_csv(r"D:\GIT\Turbidez\Output\correlaciones\C4_ln_turb_vs_ln_banda.csv")
 
 C_comb = pd.concat([C1, C2 ,C3, C4], axis=1)
 
 C_comb
 ```
+
+## Seleción de variables
 
 A partir del análisis con las correlaciones entre turbidez (y su logaritmo) y distintas bandas (y sus logaritmos). Se puede observar que en las combinaciones 1 y 4 las correlaciones son mas altas respecto a C2 y C3. Por que que se seguirá el análisis con estas combinaciones:
 
@@ -946,21 +577,23 @@ Proponemos avanzar hacia un modelo multivariable, utilizando el *AIC* @Chatterje
 
 AIC=n⋅ln(RMSE²)+2k
 
-
-## Combinación 1: turb vs bandas
+### Combinación 1: turb vs bandas
 
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
+
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from utils import run_bootstrap_linear_regression_analysis  # Asegurate de que esta función devuelve lo necesario
+from bootstrap import run_bootstrap_linear_regression_analysis 
 
 # Leer los datos
-Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
 y = Datos['turbidez']
 
 # Variables
@@ -1030,7 +663,9 @@ df_resultados
 **Gráfico de AIC**
 
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 aic_scores = [r["AIC"] for r in resultados]
 n_vars = [r["num_variables"] for r in resultados]
 
@@ -1057,9 +692,12 @@ AIC no busca modelos simples en sí, sino la mejor compensación entre ajuste y 
 A pesar de agregar más variables, el error (RMSE) está disminuyendo mucho más rápido de lo que penaliza el AIC con +2k
 
 
-## Combinación 4: ln_turb vs ln_bandas
+### Combinación 4: ln_turb vs ln_bandas
+
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -1067,10 +705,10 @@ from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from utils import run_bootstrap_linear_regression_analysis  # Asegurate de que esta función devuelve lo necesario
+from bootstrap import run_bootstrap_linear_regression_analysis  # Asegurate de que esta función devuelve lo necesario
 
 # Leer los datos
-Datos = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv")
+Datos = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\ln_turb-ln_banda.csv")
 y = Datos['ln_turbidez']
 
 # Variables
@@ -1144,7 +782,9 @@ df_resultados
 
 **Gráfico de AIC**
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 aic_scores = [r["AIC"] for r in resultados]
 n_vars = [r["num_variables"] for r in resultados]
 
@@ -1156,25 +796,30 @@ plt.grid(True)
 plt.show()
 ```
 
-# Entrenamiento de Modelos
+# Entrenamiento de modelo lineal 
 
+A continuación se presentan los modelos lineales candidatos para estimar la turbidez, cada uno con sus respectivas métricas de desempeño.
 
-## Modelos sin logaritmo (turb vs bandas)
+## Modelos lineales
 
-### Modelo con B05 {#modeloB05}
+### Modelo lineal 1 
+
+Utiliza B05, para estimar tubidez
 
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-from utils import run_bootstrap_linear_regression_analysis
+from bootstrap import run_bootstrap_linear_regression_analysis
 
 # Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
 
 # Variables predictoras
 variables = ['B05']
@@ -1268,23 +913,25 @@ display(Math(ecuacion_latexB05))
 
 ```
 
+### Modelo lineal 2
 
-
-### Modelo con 6 bandas
-
+Utiliza 6 bandas para estimar la turbidez: B04, B05, B06, B07, B08 y B8A
 
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
+#| 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-from utils import run_bootstrap_linear_regression_analysis
+from bootstrap import run_bootstrap_linear_regression_analysis
 
 # Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
 
 # Variables predictoras
 variables = ['B05', 'B06', 'B08', 'B07', 'B04', 'B8A']
@@ -1372,22 +1019,25 @@ from IPython.display import display, Math
 display(Math(ecuacion_latex))
 ```
 
-## Modelos aplicando logaritmo en turbidez y en bandas
-### Modelo con 1 variable (ln_B05)
+### Modelo lineal 3
+
+Utiliza el logaritmo de la turbidez y en la banda B05
 
 **Escala logarítmica**
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-from utils import run_bootstrap_linear_regression_analysis
+from bootstrap import run_bootstrap_linear_regression_analysis
 
 # Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv")
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\ln_turb-ln_banda.csv")
 
 # Variables predictoras
 variables = ['ln_B05']
@@ -1437,8 +1087,8 @@ x_tendencia = np.linspace(min_val, max_val, 100)
 y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
 plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
-plt.xlabel("Turbidez real (NTU)")
-plt.ylabel("Turbidez estimada (NTU)")
+plt.xlabel("ln(Turbidez) medida (NTU)")
+plt.ylabel("ln(Turbidez) estimada (NTU)")
 plt.title(
     f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
     f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
@@ -1475,7 +1125,9 @@ display(Math(ecuacion_latex))
 **Escala real**
 
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 
 # Transformo a escala real
 
@@ -1521,22 +1173,25 @@ plt.tight_layout()
 plt.show()
 ```
 
-### Modelo con 3 variables
+### Modelo lineal 4
+
+Utiliza el logaritmo de la turbidez y en las bandas: B04, B05 y B06
 
 **Escala Logarítmica**
-
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-from utils import run_bootstrap_linear_regression_analysis
+from bootstrap import run_bootstrap_linear_regression_analysis
 
 # Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C4_ln_turb_ln_banda.csv")
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\ln_turb-ln_banda.csv")
 
 # Variables predictoras
 variables = ['ln_B05','ln_B04','ln_B06']
@@ -1586,8 +1241,8 @@ x_tendencia = np.linspace(min_val, max_val, 100)
 y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
 plt.plot(x_tendencia, y_tendencia, '-', color='black', lw=2, label="Línea de tendencia")
 
-plt.xlabel("Turbidez real (NTU)")
-plt.ylabel("Turbidez estimada (NTU)")
+plt.xlabel("ln(Turbidez) medida (NTU)")
+plt.ylabel("ln(Turbidez) estimada (NTU)")
 plt.title(
     f"Regresión lineal con Bootstrapping ({n_iteraciones_config} modelos)\n"
     f"R² entrenamiento: {r2_train_boot:.4f}, RMSE: {rmse_train_boot:.4f} | "
@@ -1645,8 +1300,11 @@ ecuacion_turb = f"turbidez = {intercepto_escala_real:.4f} * " + " * ".join([
 ```
 
 **Escala Real**
+
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 
 # Transformo a escala real
 
@@ -1692,283 +1350,30 @@ plt.tight_layout()
 plt.show()
 ```
 
-# Procesamiento de productos satelitales
+### Modelo lineal elegido
 
-Para el procesamiento se utilizará la librería *rasterio* en python.
+Luego del anális de las distantas pruebas de correlación con diferenctes bandas y combinaciones de ellas, haciendo un balance entre complejidad del modelo y métricas de desempeño, se opta por elegir el **Modelo lineal 1**, que utiliza la B05 como variable predictora de la turbidez y será comparado con algún método de aprendizaje automático próximamente.
 
-Tabla de referencia para seleccionar bandas en rasterio
+Si bien el Modelo lineal 2 (que usa 6 bandas) tiene mejores métricas de desempeño, la incorporacion de tantas bandas lo hace muy complejo. Los modelos que usan transformación logaritmica tienen un peor desempeño, respecto a los modelos sin transformaciones.
 
-| Nombre de banda en archivo .tif | Banda de Sentinel-2 | Número para la lectura en rasterio |
-|---------------------------------|---------------------|------------------------------------|
-| Banda 1                         | B01                 | 1                                  |
-| Banda 2                         | B02                 | 2                                  |
-| Banda 3                         | B03                 | 3                                  |
-| Banda 4                         | B04                 | 4                                  |
-| Banda 5                         | B05                 | 5                                  |
-| Banda 6                         | B06                 | 6                                  |
-| Banda 7                         | B07                 | 7                                  |
-| Banda 8                         | B08                 | 8                                  |
-| Banda 9                         | B8A                 | 9                                  |
-| Banda 10                        | B11                 | 10                                 |
-| Banda 11                        | B12                 | 11                                 |
+A continuación se observa la ecuación del modelo, métricas de desempeño y mapas de turbidez:
 
-Lectura de imágen raster y visualización del área de estudio, con el objetivo de verificar que el código está funcionando y de que se leen correctamente los archivos.
+**Modelo con B05 y sus métricas**
 
-```{python}
-#| code-fold: true
-import rasterio as rs
-import matplotlib.pyplot as plt
-import numpy as np
-
-ruta = r"D:\GIT\Turbidez\recorte_acolite\2025-06-09.tif"
-
-# Abrir el archivo
-with rs.open(ruta) as raster:
-
-    #Definimos las bandas 
-    #Bandas RGB para ver área de estudio
-    B02 = raster.read(2) #Azul
-    B03 = raster.read(3) #Verde
-    B04 = raster.read(4) #Rojo
-
-    #Para calcular NDWI con B03 y B11
-    B11 = raster.read(10)
-
-    #para el modelo
-    B05 = raster.read(5)
-    
-# Composión de imagen 
-rgb = np.stack([B04, B03, B02], axis=-1)
-
-# Mejorar constraste
-def stretch(banda):
-    p2, p98 = np.percentile(banda, (2, 98))
-    return np.clip((banda - p2) / (p98 - p2 + 1e-6), 0, 1)
-
-rgb_stretched = np.stack([stretch(B04), stretch(B03), stretch(B02)], axis=-1)
-
-# Gráfico
-plt.figure(figsize=(4.5, 4.5))
-plt.imshow(rgb_stretched)
-plt.title("Río Paraná")
-plt.axis("off")
-plt.tight_layout()
-plt.show()
-```
-
-Se utilizrá el índice NDWI para recortar la imágen satelital, y poder trabajar únicamente con los píxeles de agua.
-
-$NDWI=(B03-B11)/(B03+B11)$
-
-```{python}
-#| code-fold: true
-import numpy as np
-import matplotlib.pyplot as plt
-from skimage.filters import threshold_otsu
-
-# NDWI
-ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
-
-# Calcular umbral automático con Otsu
-umbral = threshold_otsu(ndwi[np.isfinite(ndwi)])  # descartamos NaN e inf
-
-# Binarización: agua = 1, no agua = 0
-ndwi_bin = np.where(ndwi >= umbral, 1, 0)
-
-# Gráfico máscara de agua
-fig, ax = plt.subplots(figsize=(4.5, 4.5))
-img = ax.imshow(ndwi_bin, cmap='Greys')
-ax.set_title(f"NDWI - Otsu (umbral={umbral:.3f})")
-cbar = fig.colorbar(img, ax=ax, fraction=0.046, pad=0.04)
-cbar.set_label("Agua (1) / No Agua (0)")
-ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-ax.axis("on")
-plt.tight_layout()
-plt.show()
-```
-
-
-Luego del anális de las distantas pruebas de correlación con diferenctes bandas y combinaciones de ellas, optamos por tomar el modelo que utiliza la banda B05, para estimar la turbidez.
-
-Aplicamos la ecuación hallada para ver la distribución de la turbidez en el río.
-
-```{python}
-#| code-fold: true
-import numpy as np
-import matplotlib.pyplot as plt
-import re
-
-# --- Calcular turbidez directamente con variables guardadas ---
-turbidez = coef_B05 * B05 + intercept_B05
-
-# Forzar a que no existan valores negativos (los pone en 0)
-turbidez = np.clip(turbidez, 0, None)
-
-# --- Aplicar máscara NDWI (solo donde hay agua) ---
-turbidez_agua = np.where(ndwi_bin == 1, turbidez, np.nan)
-
-# --- Calcular percentiles para ajustar visualización ---
-p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
-
-```
-
-**Mapa de turbidez**
-
-```{python}
-#| code-fold: true
-import matplotlib.pyplot as plt
-
-# Crear figura
-fig, ax = plt.subplots(figsize=(4.5, 4.5))
-
-# Mostrar imagen con coordenadas reales
-img = ax.imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
-
-# Título y colorbar
-ax.set_title("Turbidez 2025-06-09")
-cbar = fig.colorbar(img, ax=ax, fraction=0.046, pad=0.04)
-cbar.set_label("Turbidez (NTU)")
-ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-ax.axis("on")
-plt.tight_layout()
-plt.show()
-
-```
-
-**Para exportar tif**
-
-```{python}
-#| code-fold: true
-import rasterio
-import numpy as np
-import os
-import re
-
-# Ruta de una banda original para copiarle la georreferenciación
-ruta_base = r"D:\GIT\Turbidez\recorte_acolite\2025-06-09.tif"
-
-# Carpeta donde guardar el resultado
-carpeta_salida = r"D:\GIT\Turbidez\tif salidas"
-
-# --- Extraer la fecha del nombre del archivo base ---
-nombre_base = os.path.basename(ruta_base)  # "2025-06-09.tif"
-fecha = re.search(r"\d{4}-\d{2}-\d{2}", nombre_base).group()  # "2025-06-09"
-
-# Nombre final con fecha incluida
-nombre_salida = f"turbidez_{fecha}.tif"
-ruta_salida = os.path.join(carpeta_salida, nombre_salida)
-
-# Abrimos la banda base para obtener el perfil (tamaño, proyección, etc.)
-with rasterio.open(ruta_base) as src:
-    perfil = src.profile
-
-# Ajustar perfil para nuestro resultado
-perfil.update(
-    dtype=rasterio.float32,
-    count=1,
-    compress="lzw",
-    nodata=np.nan
-)
-
-# Guardar turbidez_agua en un GeoTIFF
-with rasterio.open(ruta_salida, "w", **perfil) as dst:
-    dst.write(turbidez_agua.astype(rasterio.float32), 1)
-
-```
-
-
-# Lectura automática de tif y procesamiento para mapas de turbidez, cálculo de umbral de mácara de agua con método Otsu
-
-```{python}
-#| code-fold: true
-import rasterio as rs
-import numpy as np
-import matplotlib.pyplot as plt
-import glob
-import os
-from skimage.filters import threshold_otsu
-
-
-# Carpeta con archivos .tif
-carpeta = r"D:\GIT\Turbidez\recorte_acolite"
-
-# Buscar todos los .tif
-tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
-print(f"Se encontraron {len(tifs)} archivos .tif")
-
-for ruta in tifs:
-    nombre = os.path.basename(ruta)
-    fecha = os.path.splitext(nombre)[0]   # nombre sin extensión
-    print(f"\nProcesando: {nombre}")
-
-    with rs.open(ruta) as raster:
-        # Bandas necesarias
-        B03 = raster.read(3).astype(np.float32)  # Verde
-        B05 = raster.read(5).astype(np.float32)  # RedEdge (para ecuación turbidez)
-        B11 = raster.read(10).astype(np.float32) # SWIR
-
-    # --- NDWI ---
-    ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
-
-    # --- Umbral Otsu ---
-    umbral = threshold_otsu(ndwi[np.isfinite(ndwi)])
-    print(f"   Umbral NDWI (Otsu): {umbral:.3f}")
-
-    # --- Binarización: agua = 1, no agua = 0 ---
-    ndwi_bin = np.where(ndwi >= umbral, 1, 0)
-
-    # --- Turbidez ---
-    turbidez = coef_B05 * B05 + intercept_B05
-    turbidez = np.clip(turbidez, 0, None)  # negativos a 0
-    turbidez_agua = np.where(ndwi_bin == 1, turbidez, np.nan)
-
-    # --- Calcular percentiles para ajustar visualización ---
-    p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
-
-    # --- Gráfico conjunto ---
-    fig, axes = plt.subplots(1, 2, figsize=(8, 4.5))
-
-    # Panel 1: máscara de agua
-    im1 = axes[0].imshow(ndwi_bin, cmap="Greys")
-    axes[0].set_title(f"Máscara de agua - {fecha}")
-    axes[0].axis("off")
-    cbar1 = fig.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04)
-    cbar1.set_label("Agua (1) / No Agua (0)")
-    
-
-    # Panel 2: turbidez
-    im2 = axes[1].imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
-    axes[1].set_title(f"Turbidez - {fecha}")
-    axes[1].axis("off")
-    cbar2 = fig.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
-    cbar2.set_label("Turbidez (NTU)")
-
-
-    plt.tight_layout()
-    plt.show()
-
-```
-
-Como el método Otsu no puede procesar correctamente algunas imágenes, se decidió utilizar el valor promedio del NDWI para calcular el umbral.
-
-# Conclusión para modelos entrenados con métodos de regresion lineal clásicos
-
-Se seleccionará el mejor modelo lineal, este es el que utiliza la B05 de Sentinel-2 como variable predictora de la turbidez y será empleado para hacer la comparación con los métodos de aprendizaje automático próximamente. A continuación se resume la ecuación, métricas de desempeño y mapas de turbidez:
-
-Modelo con B05 y sus métricas
-
-```{python}
-#| code-fold: true
+```{python,}
+#| echo: false
+#| warning: false
+#| message: false
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-from utils import run_bootstrap_linear_regression_analysis
+from bootstrap import run_bootstrap_linear_regression_analysis
 
 # Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
 
 # Variables predictoras
 variables = ['B05']
@@ -2062,10 +1467,12 @@ display(Math(ecuacion_latexB05))
 
 ```
 
-Mapas de turbidez 
+**Mapas de turbidez modelo lineal elegido**
 
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
 import rasterio as rs
 import numpy as np
 import matplotlib.pyplot as plt
@@ -2074,21 +1481,20 @@ import os
 from skimage.filters import threshold_otsu
 
 # Carpeta con archivos .tif
-carpeta = r"D:\GIT\Turbidez\recorte_acolite"
-salida = os.path.join(carpeta, "turbidez_out")  # subcarpeta para salidas
+carpeta = r"D:\GIT\Turbidez\Input\recorte_acolite"
+salida = r"D:\GIT\Turbidez\Output\tiff mod_lineal"
 
 # Crear carpeta si no existe
 os.makedirs(salida, exist_ok=True)
 
 # Buscar todos los .tif
 tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
-print(f"Se encontraron {len(tifs)} archivos .tif")
+print(f"Se procesaron {len(tifs)} archivos .tif")
 
 for ruta in tifs:
     nombre = os.path.basename(ruta)
     fecha = os.path.splitext(nombre)[0]   # nombre sin extensión
-    print(f"\nProcesando: {nombre}")
-
+    
     with rs.open(ruta) as raster:
         # Bandas necesarias
         B03 = raster.read(3).astype(np.float32)  # Verde
@@ -2151,96 +1557,133 @@ for ruta in tifs:
 
 ```
 
-# Método de aprendizaje automático XGBoost
+# Entrenamiento de modelo de aprendizaje automático
+
+## Modelo XGBoost 
+
+Se seleccionó XGBoost, como modelo de aprendizaje automático para la estimación de la turbidez. Se importará el modelo desde sklearn, para su entrenamiento y conocer sus hiperparámetros. En esta etapa se utilizará XGBoost sin optimizacion de hiperparámetros, en una etapa posterior se elegirá un método de optimizacion y se evalurá nuevamente las métricas de desempeño.
+
+**Entrenamiento** 
 
 ```{python}
 #| code-fold: true
+#| warning: false
+#| message: false
+#| eval: false
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error
+import pandas as pd
+import numpy as np
+import os
+
+# Leer datos
+
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
+
+X = df[["B01","B02","B03","B04","B05","B06","B07","B08","B11","B12","B8A"]]
+y = df["turbidez"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+
+# Modelo XGBoost SIN optimizar
+
+model = XGBRegressor(
+n_estimators=500,
+learning_rate=0.05,
+max_depth=6,
+subsample=0.8,
+colsample_bytree=0.8,
+random_state=42)
+
+model.fit(X_train, y_train)
+
+# Guardar modelo
+
+ruta = r"D:\GIT\Turbidez\Output\Modelos"
+os.makedirs(ruta, exist_ok=True)
+model.save_model(os.path.join(ruta, "modelo_xgboost_sin_optimizar.json"))
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: cargar_modelo_sin_optimizar
+
+# Carga el modelo XGBoost sin optimizar
+
 from xgboost import XGBRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error
 import pandas as pd
 import numpy as np
 
-# Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
 
-# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
-X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
+X = df[["B01","B02","B03","B04","B05","B06","B07","B08","B11","B12","B8A"]]
 y = df["turbidez"]
 
-# Dividir en train/test
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, random_state=42)
+X, y, test_size=0.25, random_state=42
+)
 
-# Modelo XGBoost
-model = XGBRegressor(
-    n_estimators=500,
-    learning_rate=0.05,
-    max_depth=6,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    random_state=42)
+# Cargar modelo guardado
 
-# Entrenar
-model.fit(X_train, y_train)
+model = XGBRegressor()
+model.load_model(r"D:\GIT\Turbidez\Output\Modelos\modelo_xgboost_sin_optimizar.json")
 
-# --- Predicciones ---
+# Predicciones
+
 y_train_pred = model.predict(X_train)
 y_test_pred = model.predict(X_test)
 
-# --- Métricas entrenamiento ---
+# Métricas
+
 r2_train = r2_score(y_train, y_train_pred)
 rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
 
-# --- Métricas testeo ---
 r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
-# --- Print resultados ---
-print("=== Resultados Entrenamiento ===")
-print(f"R² train: {r2_train:.3f}")
-print(f"RMSE train: {rmse_train:.3f}")
+```
 
-print("\n=== Resultados Testeo ===")
-print(f"R² test: {r2_test:.3f}")
-print(f"RMSE test: {rmse_test:.3f}")
+**Métricas de desempeño**
 
-# Gráfico estimado vs real
+```{python}
+#| echo: false
+#| warning: false
+#| message: false
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 plt.figure(figsize=(4.5, 4.5))
 
-# --- Puntos entrenamiento ---
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
-            label="Datos de entrenamiento", marker='o')
+label="Datos de entrenamiento", marker='o')
 
-# --- Puntos test ---
 plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
-            label="Datos de testeo", marker='^')
+label="Datos de testeo", marker='^')
 
-# --- Línea ideal 1:1 ---
 min_val = min(np.min(y_train), np.min(y_test))
 max_val = max(np.max(y_train), np.max(y_test))
+
 plt.plot([min_val, max_val], [min_val, max_val], '--',
-         color="#17A77E", lw=2, label="Línea ideal")
+color="#17A77E", lw=2, label="Línea ideal")
 
-# --- Línea de tendencia sobre test ---
-coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
-x_tendencia = np.linspace(min_val, max_val, 100)
-y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
-plt.plot(x_tendencia, y_tendencia, '-', color='black',
-         lw=2, label="Línea de tendencia (test)")
+coef = np.polyfit(y_test, y_test_pred, 1)
+x_t = np.linspace(min_val, max_val, 100)
+y_t = coef[0] * x_t + coef[1]
+plt.plot(x_t, y_t, '-', color='black', lw=2, label="Línea de tendencia (test)")
 
-# --- Etiquetas ---
 plt.xlabel("Turbidez real (NTU)")
 plt.ylabel("Turbidez estimada (NTU)")
 
 plt.title(
-    f"Modelo XGBoost\n"
-    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
-    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
+f"Modelo XGBoost sin optimizar\n"
+f"R² train: {r2_train:.3f}, RMSE:{rmse_train:.3f} | "
+f"R² test: {r2_test:.3f}, RMSE:{rmse_test:.3f}"
 )
 
 plt.legend()
@@ -2250,10 +1693,12 @@ plt.show()
 
 ```
 
-## Mapas con XGBoost
-
 ```{python}
-#| code-fold: true
+#| eval: false
+#| echo: false
+#| warning: false
+#| message: false
+
 import rasterio as rs
 import numpy as np
 import matplotlib.pyplot as plt
@@ -2261,10 +1706,15 @@ import glob
 import os
 from skimage.filters import threshold_otsu
 import pandas as pd
+from xgboost import XGBRegressor
+
+# Cargar modelo XGBoost guardado
+model = XGBRegressor()
+model.load_model(r"D:\GIT\Turbidez\Output\Modelos\modelo_xgboost_sin_optimizar.json")
 
 # --- Configuración ---
-carpeta = r"D:\GIT\Turbidez\recorte_acolite"
-salida = os.path.join(carpeta, "turbidez_out_XBOOST")
+carpeta = r"D:\GIT\Turbidez\Input\recorte_acolite"
+salida = r"D:\GIT\Turbidez\Output\tiff XGBoost"
 os.makedirs(salida, exist_ok=True)
 
 # Definir nombres de features (idénticos a entrenamiento)
@@ -2278,7 +1728,7 @@ print(f"Se encontraron {len(tifs)} archivos .tif")
 for ruta in tifs:
     nombre = os.path.basename(ruta)
     fecha = os.path.splitext(nombre)[0]
-    print(f"\nProcesando: {nombre}")
+
 
     with rs.open(ruta) as raster:
         # Leer bandas
@@ -2438,170 +1888,41 @@ Es una búsqueda inteligente, no aleatoria ni exhaustiva.
 
  • Más técnica, aunque muy potente.
 
-## Modelo XGBoost optimizado con Grid Search (Búsqueda por cuadrícula)
-
-```{python}
-#| code-fold: true
-from xgboost import XGBRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error
-import pandas as pd
-import numpy as np
-
-# Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
-
-# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
-X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
-y = df["turbidez"]
-
-# Dividir en train/test
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, random_state=42)
-
-# --- OPTIMIZACIÓN DE HIPERPARÁMETROS CON GRID SEARCH ---
-
-from sklearn.model_selection import GridSearchCV
-from xgboost import XGBRegressor
-
-# Definimos las combinaciones a probar
-param_grid = {
-    'max_depth': [4, 6, 8],
-    'learning_rate': [0.01, 0.05, 0.1],
-    'subsample': [0.7, 0.8, 1.0],
-    'colsample_bytree': [0.7, 0.8, 1.0],
-    'n_estimators': [300, 500, 700]
-}
-
-# Modelo base
-xgb_model = XGBRegressor(random_state=42)
-
-# Configuración del GridSearch
-grid_search = GridSearchCV(
-    estimator=xgb_model,
-    param_grid=param_grid,
-    scoring='r2',
-    cv=5,           # validación cruzada con 5 particiones
-    verbose=0,
-    n_jobs=1       )
-
-# Entrenamos el GridSearch
-
-grid_search.fit(X_train, y_train)
-
-# Mostramos los mejores parámetros y resultados
-print("\n=== RESULTADOS GRID SEARCH ===")
-print("Mejores parámetros encontrados:")
-import pandas as pd
-from IPython.display import display
-
-# Convertir los mejores parámetros en DataFrame
-best_params_df = pd.DataFrame([grid_search.best_params_])
-
-# Mostrar tabla
-display(best_params_df)
-
-# Guardamos el mejor modelo
-model = grid_search.best_estimator_
-
-# Entrenamos nuevamente con los mejores parámetros (opcional)
-model.fit(X_train, y_train)
-
-# --- Predicciones ---
-y_train_pred = model.predict(X_train)
-y_test_pred = model.predict(X_test)
-
-# --- Métricas entrenamiento ---
-r2_train = r2_score(y_train, y_train_pred)
-rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
-
-# --- Métricas testeo ---
-r2_test = r2_score(y_test, y_test_pred)
-rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
-
-# --- Print resultados ---
-print("=== Resultados Entrenamiento ===")
-print(f"R² train: {r2_train:.3f}")
-print(f"RMSE train: {rmse_train:.3f}")
-
-print("\n=== Resultados Testeo ===")
-print(f"R² test: {r2_test:.3f}")
-print(f"RMSE test: {rmse_test:.3f}")
-
-# Gráfico estimado vs real
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-plt.figure(figsize=(4.5, 4.5))
-
-# --- Puntos entrenamiento ---
-plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
-            label="Datos de entrenamiento", marker='o')
-
-# --- Puntos test ---
-plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
-            label="Datos de testeo", marker='^')
-
-# --- Línea ideal 1:1 ---
-min_val = min(np.min(y_train), np.min(y_test))
-max_val = max(np.max(y_train), np.max(y_test))
-plt.plot([min_val, max_val], [min_val, max_val], '--',
-         color="#17A77E", lw=2, label="Línea ideal")
-
-# --- Línea de tendencia sobre test ---
-coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
-x_tendencia = np.linspace(min_val, max_val, 100)
-y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
-plt.plot(x_tendencia, y_tendencia, '-', color='black',
-         lw=2, label="Línea de tendencia (test)")
-
-# --- Etiquetas ---
-plt.xlabel("Turbidez real (NTU)")
-plt.ylabel("Turbidez estimada (NTU)")
-
-plt.title(
-    f"Modelo XGBoost (Optimizado con Grid Searh)\n"
-    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
-    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
-)
-
-plt.legend()
-plt.grid(True, linestyle='--', alpha=0.5)
-plt.tight_layout()
-plt.show()
-```
+En este trabajo se optó por utilar Optuna para la optimizacion de los hiperparámetros
 
 ## Modelo XGBoost optimizado con Optuna (Búsqueda bayesiana inteligente)
 
 ```{python}
-#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: false
+#| label: entrenar_xgb_optuna
+
+# Entrenamiento del modelo
+
 from xgboost import XGBRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import r2_score, mean_squared_error
 import pandas as pd
 import numpy as np
+import optuna
+import os
 
 # Leer datos
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
 
-# Definimos variables predictoras (bandas) y objetivo (turbidez medida)
-X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
+X = df[["B01","B02","B03","B04","B05","B06","B07","B08","B11","B12","B8A"]]
 y = df["turbidez"]
 
-# Dividir en train/test
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, random_state=42)
+    X, y, test_size=0.25, random_state=42
+)
 
-# --- OPTIMIZACIÓN DE HIPERPARÁMETROS CON OPTUNA ---
-
-import optuna
 optuna.logging.set_verbosity(optuna.logging.WARNING)
-from xgboost import XGBRegressor
-from sklearn.model_selection import cross_val_score
 
 def objective(trial):
-    # Espacio de búsqueda de hiperparámetros
+
     params = {
         'max_depth': trial.suggest_int('max_depth', 3, 10),
         'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3),
@@ -2611,98 +1932,129 @@ def objective(trial):
         'random_state': 42
     }
 
-    # Modelo con los parámetros actuales
     model = XGBRegressor(**params)
-
-    # Validación cruzada de 5 particiones
     score = cross_val_score(model, X_train, y_train, scoring='r2', cv=5).mean()
     return score
 
-# Crear estudio de optimización
 study = optuna.create_study(direction='maximize')
-study.optimize(objective, n_trials=50, show_progress_bar=True)
+study.optimize(objective, n_trials=50)
 
-# Mostrar resultados
-print("\n=== RESULTADOS OPTUNA ===")
-print("Mejores parámetros encontrados:")
-import pandas as pd
-from IPython.display import display
-
-# Convertir los mejores parámetros a DataFrame
+# Tabla con mejores hiperparámetros
 best_params_df = pd.DataFrame([study.best_params])
-
-# Agregar la métrica objetivo (R²)
 best_params_df["R2_promedio_CV"] = study.best_value
-
-# Mostrar tabla
 display(best_params_df)
 
-
-
-
-
-# Entrenar el modelo final con los mejores parámetros
+# Entrenar modelo final
 model = XGBRegressor(**study.best_params)
 model.fit(X_train, y_train)
 
+# Guardar modelo y parámetros
+ruta = r"D:\GIT\Turbidez\Output\Modelos"
+os.makedirs(ruta, exist_ok=True)
 
-# --- Predicciones ---
+model.save_model(os.path.join(ruta, "modelo_xgboost_optuna.json"))
+best_params_df.to_csv(os.path.join(ruta, "xgb_optuna_params.csv"), index=False)
+
+```
+
+Tabla con hiperparámetros optimizados
+
+```{python}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: tabla_optuna
+
+import pandas as pd
+
+params_path = r"D:\GIT\Turbidez\Output\Modelos\xgb_optuna_params.csv"
+best_params_df = pd.read_csv(params_path)
+
+best_params_df
+
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: cargar_modelo_xgb_optuna
+
+# Carga el modelo entrenado
+
+from xgboost import XGBRegressor
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error
+
+# Cargar datos
+
+df = pd.read_csv(r"D:\GIT\Turbidez\Output\csv\Turbidez-Bandas.csv")
+
+X = df[["B01","B02","B03","B04","B05","B06","B07","B08","B11","B12","B8A"]]
+y = df["turbidez"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+X, y, test_size=0.25, random_state=42
+)
+
+model = XGBRegressor()
+model.load_model(r"D:\GIT\Turbidez\Output\Modelos\modelo_xgboost_optuna.json")
+
+# Predicciones
+
 y_train_pred = model.predict(X_train)
 y_test_pred = model.predict(X_test)
 
-# --- Métricas entrenamiento ---
+# Métricas
+
 r2_train = r2_score(y_train, y_train_pred)
 rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
 
-# --- Métricas testeo ---
 r2_test = r2_score(y_test, y_test_pred)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_test_pred))
 
-# --- Print resultados ---
-print("=== Resultados Entrenamiento ===")
-print(f"R² train: {r2_train:.3f}")
-print(f"RMSE train: {rmse_train:.3f}")
+```
 
-print("\n=== Resultados Testeo ===")
-print(f"R² test: {r2_test:.3f}")
-print(f"RMSE test: {rmse_test:.3f}")
+Métricas de desempeño
 
-# Gráfico estimado vs real
+```{python}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: xgb_optuna_plot
+
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 plt.figure(figsize=(4.5, 4.5))
 
-# --- Puntos entrenamiento ---
 plt.scatter(y_train, y_train_pred, color="#9D50A6", alpha=0.5,
-            label="Datos de entrenamiento", marker='o')
+label="Datos de entrenamiento", marker='o')
 
-# --- Puntos test ---
 plt.scatter(y_test, y_test_pred, color="red", alpha=0.7,
-            label="Datos de testeo", marker='^')
+label="Datos de testeo", marker='^')
 
-# --- Línea ideal 1:1 ---
 min_val = min(np.min(y_train), np.min(y_test))
 max_val = max(np.max(y_train), np.max(y_test))
+
 plt.plot([min_val, max_val], [min_val, max_val], '--',
-         color="#17A77E", lw=2, label="Línea ideal")
+color="#17A77E", lw=2, label="Línea ideal")
 
-# --- Línea de tendencia sobre test ---
-coef_linea = np.polyfit(y_test, y_test_pred, 1)  # pendiente, intercepto
-x_tendencia = np.linspace(min_val, max_val, 100)
-y_tendencia = coef_linea[0] * x_tendencia + coef_linea[1]
-plt.plot(x_tendencia, y_tendencia, '-', color='black',
-         lw=2, label="Línea de tendencia (test)")
+coef = np.polyfit(y_test, y_test_pred, 1)
+x_t = np.linspace(min_val, max_val, 100)
+y_t = coef[0] * x_t + coef[1]
+plt.plot(x_t, y_t, '-', color='black', lw=2, label="Línea de tendencia (test)")
 
-# --- Etiquetas ---
 plt.xlabel("Turbidez real (NTU)")
 plt.ylabel("Turbidez estimada (NTU)")
 
 plt.title(
-    f"Modelo XGBoost (Optimizado con Optuna)\n"
-    f"R² train: {r2_train:.3f}, RMSE: {rmse_train:.3f} | "
-    f"R² test: {r2_test:.3f}, RMSE: {rmse_test:.3f}"
+f"Modelo XGBoost optimizado (Optuna)\n"
+f"R² train: {r2_train:.3f}, RMSE:{rmse_train:.3f} | "
+f"R² test: {r2_test:.3f}, RMSE:{rmse_test:.3f}"
 )
 
 plt.legend()
@@ -2710,6 +2062,107 @@ plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 
+```
+
+**Mapas XGBoost Optuna**
+
+```{python}
+#| echo: false
+#| warning: false
+#| message: false
+
+import rasterio as rs
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+import os
+from skimage.filters import threshold_otsu
+import pandas as pd
+from xgboost import XGBRegressor
+
+# Cargar modelo XGBoost guardado
+model = XGBRegressor()
+model.load_model(r"D:\GIT\Turbidez\Output\Modelos\modelo_xgboost_optuna.json")
+
+# --- Configuración ---
+carpeta = r"D:\GIT\Turbidez\Input\recorte_acolite"
+salida = r"D:\GIT\Turbidez\Output\tiff XGBoost Optuna"
+os.makedirs(salida, exist_ok=True)
+
+# Definir nombres de features (idénticos a entrenamiento)
+feature_names = ["B01", "B02", "B03", "B04", "B05",
+                 "B06", "B07", "B08", "B11", "B12", "B8A"]
+
+# Buscar todos los .tif
+tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
+print(f"Se procesaron {len(tifs)} archivos .tif")
+
+for ruta in tifs:
+    nombre = os.path.basename(ruta)
+    fecha = os.path.splitext(nombre)[0]
+    
+    with rs.open(ruta) as raster:
+        # Leer bandas
+        B01 = raster.read(1).astype(np.float32)
+        B02 = raster.read(2).astype(np.float32)
+        B03 = raster.read(3).astype(np.float32)
+        B04 = raster.read(4).astype(np.float32)
+        B05 = raster.read(5).astype(np.float32)
+        B06 = raster.read(6).astype(np.float32)
+        B07 = raster.read(7).astype(np.float32)
+        B08 = raster.read(8).astype(np.float32)
+        B8A = raster.read(9).astype(np.float32)
+        B11 = raster.read(10).astype(np.float32)
+        B12 = raster.read(11).astype(np.float32)
+
+        perfil = raster.profile
+
+    # --- NDWI y máscara de agua ---
+    ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
+    umbral = np.nanmean(ndwi)
+    mascara = (ndwi > umbral).astype(np.uint8)
+
+    # --- Crear array de features ---
+    filas, cols = B03.shape
+    X_img = np.stack([B01, B02, B03, B04, B05,
+                      B06, B07, B08, B11, B12, B8A], axis=-1)
+    X_img_2d = X_img.reshape(-1, X_img.shape[-1])
+
+    # Convertir a DataFrame con nombres de columnas iguales al entrenamiento
+    X_img_2d_df = pd.DataFrame(X_img_2d, columns=feature_names)
+
+    # --- Predecir turbidez ---
+    turbidez_pred = model.predict(X_img_2d_df)
+    turbidez_pred = turbidez_pred.reshape(filas, cols)
+
+    # Aplicar máscara de agua
+    turbidez_agua = np.where(mascara == 1, turbidez_pred, np.nan)
+
+    # --- Exportar a GeoTIFF ---
+    salida_tif = os.path.join(salida, f"turbidez_{fecha}.tif")
+    perfil.update(dtype=rs.float32, count=1, compress='lzw', nodata=np.nan)
+    with rs.open(salida_tif, 'w', **perfil) as dst:
+        dst.write(turbidez_agua.astype(np.float32), 1)
+
+    # --- Percentiles para visualización ---
+    p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
+
+    # --- Gráfico ---
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4.5))
+    im1 = axes[0].imshow(mascara, cmap="Greys")
+    axes[0].set_title(f"Máscara de agua - {fecha}")
+    axes[0].axis("off")
+    cbar1 = fig.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04)
+    cbar1.set_label("Agua (1) / No Agua (0)")
+
+    im2 = axes[1].imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
+    axes[1].set_title(f"Turbidez (XGBoost) - {fecha}")
+    axes[1].axis("off")
+    cbar2 = fig.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
+    cbar2.set_label("Turbidez (NTU)")
+
+    plt.tight_layout()
+    plt.show()
 ```
 
 ## Relevancia de Bandas espectrales en el modelo XGBOOST
@@ -2734,7 +2187,6 @@ En XGBoost, el atributo model.feature_importances_ mide la importancia promedio 
 XGBoost da la importancia relativa (no absoluta ni porcentual) basada en "weight".
 Los valores se normalizan para que la suma de todos sea 1.0.
 
-
 | Tipo de importancia (`importance_type`) | Qué mide exactamente                                           | Interpretación práctica                       |
 | --------------------------------------- | -------------------------------------------------------------- | --------------------------------------------- |
 | `"weight"` *(por defecto)*              | Número de veces que la variable fue usada para dividir nodos   | Bandas usadas más veces para tomar decisiones |
@@ -2742,15 +2194,14 @@ Los valores se normalizan para que la suma de todos sea 1.0.
 | `"cover"`                               | Promedio de la cantidad de datos afectados por esas divisiones | Qué tan general es su influencia              |
 | `"total_gain"` o `"total_cover"`        | Suma total de las métricas anteriores                          | Importancia acumulada 
 
-**Bandas de Sentinel-2**
-
-![Bandas de Sentinel-2](D:\GIT\Turbidez\img\Bandas-satélite-imágenes-Sentinel-2.jpg){fig-align="center"}
-
 **Importancia de cada banda dentro del modelo XGBoost**
 
 ```{python}
-#| code-fold: true
-# === IMPORTANCIA DE BANDAS (Feature Importances) ===
+
+#| echo: false
+#| warning: false
+#| message: false
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -2763,10 +2214,12 @@ importancia_df = pd.DataFrame({
     'Importancia': importancias
 }).sort_values(by='Importancia', ascending=False)
 
+importancia_df = importancia_df.reset_index(drop=True)
+
 display(importancia_df)
 
 # Gráfico de barras ordenado
-plt.figure(figsize=(8, 4))
+plt.figure(figsize=(6, 4))
 plt.bar(importancia_df['Banda'], importancia_df['Importancia'], color='#2E86AB')
 plt.title('Importancia de las bandas en el modelo XGBoost')
 plt.xlabel('Banda')
@@ -2778,139 +2231,23 @@ plt.show()
 
 ```
 
-B05 explica la mayor parte del poder predictivo total del modelo.
+El análisis de importancia de características del modelo XGBoost optimizado muestra una dominancia muy marcada de la banda B05, que concentra cerca del 60% de la importancia total. Esto indica que, para el modelo, la información contenida en B05 es el factor más determinante para estimar la turbidez.
 
-Las bandas con valores cercanos a cero aportan muy poca información o son redundantes con otras.
+En segundo lugar aparece la banda B06, con una importancia mucho menor pero aún relevante aproximadamente 15%.
+Después de estas dos, el resto de las bandas (B01, B02, B08, B8A, B07) aportan importancias moderadas y similares entre sí, lo que indica que contribuyen al modelo pero de forma secundaria.
 
-Las bandas Red Edge (B05–B06-B07) se ubican justo en la transición entre el rojo y el infrarrojo cercano, donde la reflectancia del agua cambia mucho con la concentración de sedimentos.
-→ Son excelentes indicadores de turbidez o material particulado suspendido.
+Por otro lado, algunas bandas como B03, B04, B11 y B12 tienen una importancia prácticamente nula, lo que sugiere que su aporte al modelo es mínimo. Esto podría deberse a que estas bandas no contienen información útil para diferenciar niveles de turbidez o dicha información está fuertemente correlacionada con otras bandas más relevantes.
 
-Las bandas azules (B01–B02) todavía aportan algo, porque la turbidez afecta la dispersión del azul.
-→ En aguas claras, el azul predomina; en aguas turbias, se atenúa.
+El modelo depende fuertemente de un conjunto reducido de bandas, especialmente B05.
 
-Las bandas SWIR (B11, B12) y el rojo visible (B04) no aportan casi nada, ya que esas longitudes de onda no penetran el agua y son más útiles para suelo o vegetación.
+La alta concentración de importancia en pocas bandas sugiere que la señal espectral relacionada con la turbidez está localizada en rangos específicos del espectro.
 
+Las bandas con importancia mínima podrían ser candidatas para eliminación en futuros experimentos, lo que implicaría: 
+-Modelos más ligeros
+-Menor costo computacional
+-Potencialmente mejorar generalización al reducir ruido
 
-## Mapas XGBOOST con hiperparámetros optimizados
+# Conclusión
 
-```{python}
-#| code-fold: true
-#| message: false
-#| warning: false
+La distribución de importancias indica que la turbidez está fuertemente asociada a la reflectancia capturada por B05 y B06, mientras que el resto de las bandas aportan información secundaria. Esto es consistente con la sensibilidad del espectro del infrarrojo cercano y rojo a la materia en suspensión, lo cual valida físicamente la interpretación del modelo.
 
-import rasterio as rs
-import numpy as np
-import matplotlib.pyplot as plt
-import glob
-import os
-import pandas as pd
-from xgboost import XGBRegressor
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import r2_score, mean_squared_error
-import optuna
-from skimage.filters import threshold_otsu
-
-# --- CONFIGURACIÓN ---
-carpeta = r"D:\GIT\Turbidez\recorte_acolite"
-salida = os.path.join(carpeta, "turbidez_out_XGBOOST_optuna")
-os.makedirs(salida, exist_ok=True)
-
-# --- ENTRENAMIENTO DEL MODELO OPTIMIZADO ---
-df = pd.read_csv(r"D:\GIT\Turbidez\Datos creados\Datos_turb_banda\C1_turb_banda.csv")
-
-# Variables predictoras y objetivo
-X = df[["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12", "B8A"]]
-y = df["turbidez"]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
-optuna.logging.set_verbosity(optuna.logging.WARNING)
-
-def objective(trial):
-    params = {
-        'max_depth': trial.suggest_int('max_depth', 3, 10),
-        'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3),
-        'subsample': trial.suggest_float('subsample', 0.6, 1.0),
-        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
-        'n_estimators': trial.suggest_int('n_estimators', 200, 800),
-        'random_state': 42
-    }
-    model = XGBRegressor(**params)
-    score = cross_val_score(model, X_train, y_train, scoring='r2', cv=5).mean()
-    return score
-
-study = optuna.create_study(direction='maximize')
-study.optimize(objective, n_trials=50, show_progress_bar=False)
-
-best_params = study.best_params
-print("=== MEJORES PARÁMETROS ===")
-print(best_params)
-print(f"R² promedio CV: {study.best_value:.3f}")
-
-# Entrenar modelo final
-model = XGBRegressor(**best_params)
-model.fit(X_train, y_train)
-
-# Evaluar desempeño
-y_test_pred = model.predict(X_test)
-print(f"R² test: {r2_score(y_test, y_test_pred):.3f}")
-print(f"RMSE test: {np.sqrt(mean_squared_error(y_test, y_test_pred)):.3f}")
-
-# --- PROCESAR RASTERS ---
-feature_names = ["B01", "B02", "B03", "B04", "B05",
-                 "B06", "B07", "B08", "B11", "B12", "B8A"]
-
-tifs = sorted(glob.glob(os.path.join(carpeta, "*.tif")))
-print(f"\nSe encontraron {len(tifs)} archivos .tif")
-
-for ruta in tifs:
-    nombre = os.path.basename(ruta)
-    fecha = os.path.splitext(nombre)[0]
-    print(f"\nProcesando: {nombre}")
-
-    with rs.open(ruta) as raster:
-        bandas = [raster.read(i).astype(np.float32) for i in range(1, 12)]
-        perfil = raster.profile
-
-    # --- NDWI y máscara de agua ---
-    B03, B11 = bandas[2], bandas[9]
-    ndwi = (B03 - B11) / (B03 + B11 + 1e-6)
-    umbral = np.nanmean(ndwi)
-    mascara = (ndwi > umbral).astype(np.uint8)
-
-    # --- Crear matriz de predicción ---
-    filas, cols = B03.shape
-    X_img = np.stack(bandas, axis=-1)
-    X_img_2d = X_img.reshape(-1, X_img.shape[-1])
-    X_img_df = pd.DataFrame(X_img_2d, columns=feature_names)
-
-    # --- Predecir turbidez ---
-    turbidez_pred = model.predict(X_img_df)
-    turbidez_pred = turbidez_pred.reshape(filas, cols)
-
-    # Aplicar máscara
-    turbidez_agua = np.where(mascara == 1, turbidez_pred, np.nan)
-
-    # --- Exportar GeoTIFF ---
-    salida_tif = os.path.join(salida, f"turbidez_{fecha}.tif")
-    perfil.update(dtype=rs.float32, count=1, compress='lzw', nodata=np.nan)
-    with rs.open(salida_tif, 'w', **perfil) as dst:
-        dst.write(turbidez_agua.astype(np.float32), 1)
-
-    # --- Visualización ---
-    p5, p95 = np.nanpercentile(turbidez_agua, [5, 95])
-    fig, axes = plt.subplots(1, 2, figsize=(8, 4.5))
-
-    im1 = axes[0].imshow(mascara, cmap="Greys")
-    axes[0].set_title(f"Máscara de agua - {fecha}")
-    axes[0].axis("off")
-    fig.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04, label="Agua / No Agua")
-
-    im2 = axes[1].imshow(turbidez_agua, cmap="rainbow", vmin=p5, vmax=p95)
-    axes[1].set_title(f"Turbidez (XGBoost Optuna) - {fecha}")
-    axes[1].axis("off")
-    fig.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04, label="Turbidez (NTU)")
-
-    plt.tight_layout()
-    plt.show()
-
-```
