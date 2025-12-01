@@ -2249,5 +2249,19 @@ Las bandas con importancia mínima podrían ser candidatas para eliminación en 
 
 # Conclusión
 
-La distribución de importancias indica que la turbidez está fuertemente asociada a la reflectancia capturada por B05 y B06, mientras que el resto de las bandas aportan información secundaria. Esto es consistente con la sensibilidad del espectro del infrarrojo cercano y rojo a la materia en suspensión, lo cual valida físicamente la interpretación del modelo.
+El análisis realizado demuestra que la estimación de turbidez a partir de bandas espectrales Sentinel-2 presenta un buen potencial predictivo, pero la capacidad del modelo depende fuertemente del tipo de algoritmo utilizado.
+
+El modelo lineal seleccionado inicialmente permitió explorar la relación entre cada banda y la turbidez, mostrando que ciertas longitudes de onda —especialmente B05, B06 y B08— concentran la mayor parte de la información relevante. Sin embargo, el comportamiento real del fenómeno es notablemente no lineal, con interacciones entre bandas que un modelo lineal no logra capturar completamente. Esto se reflejó en un desempeño aceptable pero limitado, donde el modelo tendió a subestimar valores altos de turbidez y a producir una mayor dispersión en las predicciones.
+
+En contraste, el XGBoost optimizado mediante Optuna mostró un salto significativo en capacidad predictiva. El proceso de optimización permitió ajustar hiperparámetros clave, logrando un modelo más robusto, con mejor generalización y con un ajuste más preciso tanto para los datos de entrenamiento como para los de testeo. Los indicadores R² y RMSE mejoraron sustancialmente respecto del modelo lineal, y esto se evidencia visualmente en el gráfico estimado vs real, donde la dispersión es mucho menor y la tendencia se ajusta mejor a la diagonal ideal.
+
+Además, el análisis de importancia de características del XGBoost confirma y profundiza lo detectado con el modelo lineal: las bandas del espectro rojo y NIR (especialmente B05) son determinantes para explicar la turbidez. Sin embargo, el modelo no lineal también asigna pequeñas contribuciones a otras bandas que, aunque individualmente débiles, aportan información útil cuando interactúan entre sí, lo que el modelo lineal no puede aprovechar.
+
+El modelo lineal es simple, interpretable y útil para comprender relaciones básicas entre bandas y turbidez, pero su precisión es limitada.
+
+El XGBoost optimizado ofrece una mejora clara en desempeño, captura relaciones no lineales y reduce significativamente el error, mostrando ser el enfoque más adecuado para el problema.
+
+La combinación de optimización automática (Optuna) y un algoritmo avanzado de ensamble permite obtener un modelo robusto y reproducible, adaptable a distintos conjuntos de datos y con potencial para implementarse operativamente.
+
+En conclusión, el modelo XGBoost optimizado se posiciona como la mejor alternativa para estimar turbidez a partir de productos satelitales Sentinel-2, superando ampliamente al modelo lineal tanto en precisión como en capacidad de generalización.
 
